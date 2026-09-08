@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Cracker Club — Weekly Mysteries for Young Detectives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --ink-navy-light: #22345A;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --clue-red: #A63D40;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--parchment);
+    color: var(--ink-navy);
+    line-height: 1.6;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 0;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--ink-navy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo .badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--ink-navy);
+    border: 2px solid var(--ink-navy);
+  }
+
+  .nav-cta {
+    background: var(--ink-navy);
+    color: var(--parchment);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: transform 0.15s ease;
+  }
+  .nav-cta:hover { transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    padding: 40px 0 70px;
+  }
+
+  .folder {
+    background: var(--ink-navy);
+    border-radius: 14px;
+    padding: 54px 48px;
+    position: relative;
+    overflow: hidden;
+    color: var(--parchment);
+  }
+
+  .folder::before {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    border: 2px dashed rgba(200, 155, 60, 0.35);
+  }
+
+  .case-number {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 18px;
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.15;
+    max-width: 640px;
+    margin-bottom: 20px;
+  }
+
+  .hero p.lede {
+    font-size: 1.1rem;
+    max-width: 480px;
+    color: var(--parchment-dim);
+    margin-bottom: 32px;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--brass);
+    color: var(--ink-navy);
+    padding: 14px 26px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--parchment);
+    padding: 14px 26px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 1rem;
+    border: 1.5px solid rgba(243, 233, 210, 0.4);
+  }
+
+  .stamp {
+    position: absolute;
+    bottom: 36px;
+    right: 44px;
+    font-family: var(--font-display);
+    color: var(--clue-red);
+    border: 2.5px solid var(--clue-red);
+    padding: 6px 14px;
+    border-radius: 4px;
+    transform: rotate(-8deg);
+    font-size: 0.9rem;
+    opacity: 0.85;
+    display: none;
+  }
+
+  @media (min-width: 700px) {
+    .stamp { display: block; }
+  }
+
+  /* SECTION HEADERS */
+  .section {
+    padding: 64px 0;
+  }
+
+  .section-label {
+    font-family: var(--font-display);
+    color: var(--clue-red);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+
+  .section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    max-width: 520px;
+    margin-bottom: 16px;
+  }
+
+  .section p.intro {
+    max-width: 520px;
+    color: #3B4A63;
+    font-size: 1.05rem;
+    margin-bottom: 36px;
+  }
+
+  /* CASE TEASER */
+  .teaser-card {
+    background: var(--parchment-dim);
+    border: 1.5px solid rgba(22, 35, 61, 0.15);
+    border-radius: 12px;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  @media (min-width: 720px) {
+    .teaser-card { grid-template-columns: 1fr 1fr; align-items: center; }
+  }
+
+  .teaser-text h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .teaser-text p { color: #3B4A63; margin-bottom: 20px; }
+
+  .lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink-navy);
+    color: var(--brass-light);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .clue-strip {
+    background: var(--ink-navy);
+    border-radius: 10px;
+    padding: 22px;
+    color: var(--parchment);
+    filter: blur(0.4px);
+  }
+
+  .clue-strip .clue-label {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+  }
+
+  .clue-strip .clue-line {
+    height: 12px;
+    background: rgba(243, 233, 210, 0.18);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  .clue-strip .clue-line:nth-child(3) { width: 70%; }
+  .clue-strip .clue-line:nth-child(4) { width: 85%; }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 720px) {
+    .steps { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .step {
+    background: var(--parchment);
+    border: 1.5px solid rgba(22, 35, 61, 0.15);
+    border-radius: 10px;
+    padding: 22px;
+    position: relative;
+  }
+
+  .step .num {
+    font-family: var(--font-display);
+    color: var(--brass);
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+
+  .step h4 {
+    font-size: 1.02rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .step p { font-size: 0.92rem; color: #3B4A63; }
+
+  /* LEADERBOARD */
+  .leaderboard {
+    background: var(--ink-navy);
+    border-radius: 12px;
+    padding: 36px 32px;
+    color: var(--parchment);
+  }
+
+  .leaderboard h2 { color: var(--parchment); }
+  .leaderboard .section-label { color: var(--brass-light); }
+  .leaderboard p.intro { color: var(--parchment-dim); }
+
+  .board-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(243, 233, 210, 0.12);
+  }
+  .board-row:last-child { border-bottom: none; }
+
+  .board-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .rank {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    width: 28px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--forest-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .codename { font-weight: 600; }
+
+  .points {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.9rem;
+  }
+
+  /* PARENT TRUST */
+  .trust-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 720px) {
+    .trust-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .trust-item h4 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .trust-item p { color: #3B4A63; font-size: 0.95rem; }
+
+  /* FOOTER CTA */
+  .footer-cta {
+    background: var(--clue-red);
+    border-radius: 14px;
+    padding: 48px;
+    text-align: left;
+    color: var(--parchment);
+    margin-bottom: 60px;
+  }
+
+  .footer-cta h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    margin-bottom: 14px;
+    max-width: 480px;
+  }
+
+  .footer-cta p { max-width: 440px; margin-bottom: 24px; color: rgba(243,233,210,0.9); }
+
+  footer {
+    padding: 30px 0 60px;
+    color: #6B7690;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo"><span class="badge">CC</span> Case Cracker Club</div>
+    <a href="#signup" class="nav-cta">Parent Sign Up</a>
+  </nav>
+</div>
+
+<div class="wrap hero">
+  <div class="folder">
+    <div class="case-number">CASE FILE — OPEN NOW</div>
+    <h1>Every week, a new mystery lands on their desk.</h1>
+    <p class="lede">Case Cracker Club gives kids a weekly puzzle to solve, a detective profile to build, and a leaderboard to climb — all in a safe, parent-managed space.</p>
+    <div class="hero-ctas">
+      <a href="#signup" class="btn-primary">Create a Parent Account</a>
+      <a href="#how" class="btn-secondary">See How It Works</a>
+    </div>
+    <div class="stamp">CONFIDENTIAL</div>
+  </div>
+</div>
+
+<div class="wrap section" id="case">
+  <div class="section-label">THIS WEEK'S CASE</div>
+  <h2>The Case of the Vanishing Lighthouse Keeper</h2>
+  <p class="intro">A new case drops every Monday. Kids get three clues, one riddle, and a final puzzle to crack — solve it before Friday to earn the week's badge.</p>
+
+  <div class="teaser-card">
+    <div class="teaser-text">
+      <div class="lock-badge">🔒 Members Only</div>
+      <h3>Clue #1 is waiting</h3>
+      <p>Sign up to unlock this week's full case file and get your detective badge started.</p>
+      <a href="#signup" class="btn-primary" style="display:inline-block;">Unlock This Case</a>
+    </div>
+    <div class="clue-strip">
+      <div class="clue-label">CLUE #1</div>
+      <div class="clue-line"></div>
+      <div class="clue-line"></div>
+      <div class="clue-line"></div>
+      <div class="clue-line"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap section" id="how">
+  <div class="section-label">HOW IT WORKS</div>
+  <h2>From sign-up to solved case</h2>
+  <p class="intro">A simple path for parents and a fun one for kids.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h4>Parent signs up</h4>
+      <p>You create and manage the family account — kids never register on their own.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h4>Kid gets a detective profile</h4>
+      <p>A nickname and avatar — no real names or personal info required.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h4>New case every Monday</h4>
+      <p>Fresh clues, riddles, and puzzles land automatically each week.</p>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <h4>Solve & climb the board</h4>
+      <p>Earn badges for solved cases and see how they rank against friends.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap section" id="leaderboard">
+  <div class="leaderboard">
+    <div class="section-label">LEADERBOARD</div>
+    <h2>Top detectives this week</h2>
+    <p class="intro">Ranked by cases solved — shown by detective codename only.</p>
+
+    <div class="board-list">
+      <div class="board-row">
+        <div class="board-left">
+          <div class="rank">01</div>
+          <div class="avatar">🕵️</div>
+          <div class="codename">Agent Marigold</div>
+        </div>
+        <div class="points">1,240 pts</div>
+      </div>
+      <div class="board-row">
+        <div class="board-left">
+          <div class="rank">02</div>
+          <div class="avatar">🔍</div>
+          <div class="codename">The Quiet Fox</div>
+        </div>
+        <div class="points">1,180 pts</div>
+      </div>
+      <div class="board-row">
+        <div class="board-left">
+          <div class="rank">03</div>
+          <div class="avatar">🧩</div>
+          <div class="codename">Puzzle Otter</div>
+        </div>
+        <div class="points">1,065 pts</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap section" id="trust">
+  <div class="section-label">FOR PARENTS</div>
+  <h2>Built with kids' privacy first</h2>
+  <p class="intro">Case Cracker Club is designed around parent-managed accounts from the ground up.</p>
+
+  <div class="trust-grid">
+    <div class="trust-item">
+      <h4>👪 Parent-managed accounts</h4>
+      <p>You create and control every child profile — kids never enter personal details themselves.</p>
+    </div>
+    <div class="trust-item">
+      <h4>🕵️ No real names on the leaderboard</h4>
+      <p>Kids play under a detective codename, never their real name or photo.</p>
+    </div>
+    <div class="trust-item">
+      <h4>🔒 No data sold, ever</h4>
+      <p>Account info is used only to run the club — never shared with advertisers.</p>
+    </div>
+    <div class="trust-item">
+      <h4>✉️ You're always in the loop</h4>
+      <p>Parents get a summary of what their kid solved each week, by email.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="footer-cta" id="signup">
+    <h2>Ready to open the club's first case?</h2>
+    <p>Create your parent account in under two minutes — your kid's first case is waiting.</p>
+    <a href="#" class="btn-primary" style="background: var(--parchment); color: var(--clue-red);">Create a Parent Account</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <footer>
+    <div>© 2026 Case Cracker Club</div>
+    <div>Privacy Policy · For Parents · Contact</div>
+  </footer>
+</div>
+
+</body>
+</html>
