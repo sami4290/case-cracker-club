@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parent Dashboard — Case Cracker Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --clue-red: #A63D40;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--parchment);
+    color: var(--ink-navy);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px; }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 36px;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+  .logout {
+    background: transparent;
+    border: 1.5px solid var(--ink-navy);
+    color: var(--ink-navy);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  h1 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; }
+  p.sub { color: #3B4A63; margin-bottom: 32px; }
+
+  .card {
+    background: white;
+    border: 1.5px solid rgba(22,35,61,0.12);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .card h2 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+
+  .child-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(22,35,61,0.08);
+  }
+  .child-row:last-child { border-bottom: none; }
+
+  .child-left { display: flex; align-items: center; gap: 14px; }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--forest-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .codename { font-weight: 700; }
+  .points { color: var(--brass); font-family: var(--font-display); font-size: 0.85rem; }
+
+  .empty-state { color: #6B7690; font-size: 0.95rem; padding: 12px 0; }
+
+  form.add-child { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+  select, input[type=text] {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(22,35,61,0.2);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+  }
+
+  input[type=text] { flex: 1; min-width: 160px; }
+
+  button.add-btn {
+    background: var(--ink-navy);
+    color: var(--parchment);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+
+  #dash-message {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    padding: 10px;
+    border-radius: 6px;
+    display: none;
+  }
+  #dash-message.error { background: rgba(166,61,64,0.12); color: var(--clue-red); display: block; }
+  #dash-message.success { background: rgba(47,93,80,0.12); color: var(--forest-teal); display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">🕵️ Case Cracker Club</div>
+    <button class="logout" onclick="logout()">Log Out</button>
+  </nav>
+
+  <h1>Welcome back</h1>
+  <p class="sub" id="parent-email">Loading your account...</p>
+
+  <div class="card">
+    <h2>Your Kids' Detective Profiles</h2>
+    <div id="children-list">
+      <div class="empty-state">Loading...</div>
+    </div>
+
+    <form class="add-child" id="add-child-form">
+      <select id="avatar-select">
+        <option value="🕵️">🕵️ Detective</option>
+        <option value="🔍">🔍 Investigator</option>
+        <option value="🧩">🧩 Puzzler</option>
+        <option value="🦉">🦉 Owl</option>
+        <option value="🦊">🦊 Fox</option>
+      </select>
+      <input type="text" id="codename-input" placeholder="Detective codename (e.g. Agent Marigold)" required>
+      <button type="submit" class="add-btn">Add Profile</button>
+    </form>
+    <div id="dash-message"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "signup.html";
+      return;
+    }
+    currentUser = session.user;
+    document.getElementById("parent-email").textContent = "Signed in as " + currentUser.email;
+    loadChildren();
+  }
+
+  async function loadChildren() {
+    const listEl = document.getElementById("children-list");
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      listEl.innerHTML = '<div class="empty-state">Could not load profiles: ' + error.message + '</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No detective profiles yet — add your first one below.</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.map(child => `
+      <div class="child-row">
+        <div class="child-left">
+          <div class="avatar">${child.avatar_emoji}</div>
+          <div class="codename">${escapeHtml(child.codename)}</div>
+        </div>
+        <div class="points">${child.points} pts</div>
+      </div>
+    `).join("");
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  document.getElementById("add-child-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const codename = document.getElementById("codename-input").value.trim();
+    const avatar = document.getElementById("avatar-select").value;
+    const messageEl = document.getElementById("dash-message");
+
+    if (!codename) return;
+
+    const { error } = await supabase.from("children").insert({
+      parent_id: currentUser.id,
+      codename: codename,
+      avatar_emoji: avatar
+    });
+
+    if (error) {
+      messageEl.className = "error";
+      messageEl.textContent = error.message;
+    } else {
+      messageEl.className = "success";
+      messageEl.textContent = "Profile added!";
+      document.getElementById("codename-input").value = "";
+      loadChildren();
+      setTimeout(() => { messageEl.style.display = "none"; }, 2000);
+    }
+  });
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = "index.html";
+  }
+
+  init();
+</script>
+
+</body>
+</html>
