@@ -155,6 +155,54 @@
     text-align: center;
     color: #6B7690;
   }
+
+  .reveal-card {
+    background: var(--ink-navy);
+    color: var(--parchment);
+    border-radius: 14px;
+    padding: 44px;
+  }
+  .reveal-badge { font-size: 2.4rem; margin-bottom: 14px; }
+  .reveal-label {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+  }
+  .reveal-card h1 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  .reveal-story {
+    background: rgba(243,233,210,0.06);
+    border-left: 3px solid var(--forest-teal);
+    padding: 18px 20px;
+    border-radius: 4px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .reveal-points {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 1rem;
+    margin-bottom: 28px;
+  }
+  .reveal-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .reveal-btn {
+    background: var(--brass);
+    color: var(--ink-navy);
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .reveal-btn.secondary {
+    background: transparent;
+    color: var(--parchment);
+    border: 1.5px solid rgba(243,233,210,0.3);
+  }
 </style>
 </head>
 <body>
@@ -328,6 +376,7 @@
 
     const childId = select.value;
     const totalPoints = POINTS_PER_STAGE * stages.length;
+    const child = children.find(c => c.id === childId);
 
     const { error: insertError } = await supabaseClient.from("solved_cases").insert({
       child_id: childId,
@@ -336,8 +385,7 @@
 
     if (insertError) {
       if (insertError.code === "23505") {
-        messageEl.className = "already";
-        messageEl.textContent = "This detective already solved this case!";
+        renderReveal(child, 0, true);
       } else {
         messageEl.className = "wrong";
         messageEl.textContent = "Something went wrong: " + insertError.message;
@@ -345,11 +393,29 @@
       return;
     }
 
-    const child = children.find(c => c.id === childId);
     await supabaseClient.from("children").update({ points: (child.points || 0) + totalPoints }).eq("id", childId);
 
-    messageEl.className = "finished";
-    messageEl.textContent = `${currentCase.badge_emoji} Case cracked! +${totalPoints} points for ${child.codename}.`;
+    renderReveal(child, totalPoints, false);
+  }
+
+  function renderReveal(child, pointsEarned, alreadySolved) {
+    document.getElementById("case-container").innerHTML = `
+      <div class="reveal-card">
+        <div class="reveal-badge">${currentCase.badge_emoji}</div>
+        <div class="reveal-label">CASE CLOSED</div>
+        <h1>${escapeHtml(currentCase.title)}</h1>
+        <div class="reveal-story">${escapeHtml(currentCase.resolution_text)}</div>
+        <div class="reveal-points">
+          ${alreadySolved
+            ? `${child.codename} already cracked this one — nice work reviewing it!`
+            : `+${pointsEarned} points for ${child.codename} 🎉`}
+        </div>
+        <div class="reveal-actions">
+          <a href="leaderboard.html" class="reveal-btn">See the Leaderboard</a>
+          <a href="dashboard.html" class="reveal-btn secondary">Back to Dashboard</a>
+        </div>
+      </div>
+    `;
   }
 
   init();
