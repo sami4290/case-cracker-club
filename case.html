@@ -383,39 +383,32 @@
       case_id: currentCase.id
     });
 
+    let alreadySolved = false;
+    let pointsEarned = totalPoints;
+
     if (insertError) {
       if (insertError.code === "23505") {
-        renderReveal(child, 0, true);
+        alreadySolved = true;
+        pointsEarned = 0;
       } else {
         messageEl.className = "wrong";
         messageEl.textContent = "Something went wrong: " + insertError.message;
+        return;
       }
-      return;
+    } else {
+      await supabaseClient.from("children").update({ points: (child.points || 0) + totalPoints }).eq("id", childId);
     }
 
-    await supabaseClient.from("children").update({ points: (child.points || 0) + totalPoints }).eq("id", childId);
+    sessionStorage.setItem("caseAchievement", JSON.stringify({
+      badge: currentCase.badge_emoji,
+      title: currentCase.title,
+      resolution: currentCase.resolution_text,
+      points: pointsEarned,
+      codename: child.codename,
+      alreadySolved: alreadySolved
+    }));
 
-    renderReveal(child, totalPoints, false);
-  }
-
-  function renderReveal(child, pointsEarned, alreadySolved) {
-    document.getElementById("case-container").innerHTML = `
-      <div class="reveal-card">
-        <div class="reveal-badge">${currentCase.badge_emoji}</div>
-        <div class="reveal-label">CASE CLOSED</div>
-        <h1>${escapeHtml(currentCase.title)}</h1>
-        <div class="reveal-story">${escapeHtml(currentCase.resolution_text)}</div>
-        <div class="reveal-points">
-          ${alreadySolved
-            ? `${child.codename} already cracked this one — nice work reviewing it!`
-            : `+${pointsEarned} points for ${child.codename} 🎉`}
-        </div>
-        <div class="reveal-actions">
-          <a href="leaderboard.html" class="reveal-btn">See the Leaderboard</a>
-          <a href="dashboard.html" class="reveal-btn secondary">Back to Dashboard</a>
-        </div>
-      </div>
-    `;
+    window.location.href = "achievement.html";
   }
 
   init();
