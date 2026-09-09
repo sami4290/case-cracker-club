@@ -53,6 +53,20 @@
     font-size: 1rem;
   }
 
+  .progress {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .progress-dot {
+    flex: 1;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(22,35,61,0.15);
+  }
+  .progress-dot.done { background: var(--forest-teal); }
+  .progress-dot.current { background: var(--brass); }
+
   .case-card {
     background: var(--ink-navy);
     color: var(--parchment);
@@ -67,65 +81,60 @@
   }
   .case-card h1 {
     font-family: var(--font-display);
-    font-size: 1.6rem;
-    margin-bottom: 20px;
+    font-size: 1.5rem;
+    margin-bottom: 18px;
     line-height: 1.3;
   }
   .case-card p.intro {
     color: var(--parchment-dim);
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     font-size: 1.02rem;
+  }
+
+  .stage-tag {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.8rem;
+    margin-bottom: 10px;
   }
 
   .clue {
     background: rgba(243,233,210,0.06);
     border-left: 3px solid var(--brass);
-    padding: 14px 18px;
-    margin-bottom: 14px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
     border-radius: 4px;
-  }
-  .clue-tag {
-    font-family: var(--font-display);
-    color: var(--brass-light);
-    font-size: 0.75rem;
-    margin-bottom: 6px;
-    display: block;
+    font-size: 1.02rem;
   }
 
-  .riddle-box {
-    margin-top: 32px;
-    padding-top: 28px;
-    border-top: 1px solid rgba(243,233,210,0.15);
-  }
-  .riddle-box h2 {
+  .question-text {
     font-family: var(--font-display);
     font-size: 1.1rem;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
-  input#answer-input {
-    width: 100%;
-    padding: 14px;
-    border-radius: 8px;
-    border: 1px solid rgba(243,233,210,0.25);
-    background: rgba(243,233,210,0.08);
-    color: var(--parchment);
-    font-family: var(--font-body);
-    font-size: 1rem;
-    margin-bottom: 16px;
-  }
-  input#answer-input::placeholder { color: rgba(243,233,210,0.4); }
 
-  button#submit-answer {
-    background: var(--brass);
-    color: var(--ink-navy);
-    border: none;
-    padding: 14px 26px;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    width: 100%;
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
   }
+
+  .option-btn {
+    text-align: left;
+    background: rgba(243,233,210,0.08);
+    border: 1.5px solid rgba(243,233,210,0.2);
+    color: var(--parchment);
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    cursor: pointer;
+  }
+  .option-btn:hover { background: rgba(243,233,210,0.15); }
+  .option-btn.correct { border-color: var(--forest-teal); background: rgba(47,93,80,0.35); }
+  .option-btn.incorrect { border-color: var(--clue-red); background: rgba(166,61,64,0.3); }
+  .option-btn:disabled { cursor: default; }
 
   #result-message {
     margin-top: 18px;
@@ -137,6 +146,7 @@
   #result-message.correct { background: rgba(47,93,80,0.35); color: #CFEFE1; display: block; }
   #result-message.wrong { background: rgba(166,61,64,0.3); color: #F5D2D3; display: block; }
   #result-message.already { background: rgba(200,155,60,0.25); color: var(--brass-light); display: block; }
+  #result-message.finished { background: rgba(47,93,80,0.35); color: #CFEFE1; display: block; }
 
   .empty-state {
     background: white;
@@ -170,9 +180,14 @@
   const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const POINTS_PER_STAGE = 10;
+
   let currentUser = null;
   let currentCase = null;
+  let stages = [];
   let children = [];
+  let stageIndex = 0;
+  let answeredCorrectly = false;
 
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -200,7 +215,20 @@
     }
 
     currentCase = caseResult.data;
-    renderCase(currentCase);
+
+    const stagesResult = await supabaseClient
+      .from("case_stages")
+      .select("*")
+      .eq("case_id", currentCase.id)
+      .order("stage_number", { ascending: true });
+
+    if (stagesResult.error || !stagesResult.data || stagesResult.data.length === 0) {
+      document.getElementById("case-container").innerHTML = '<div class="empty-state">This case has no stages yet.</div>';
+      return;
+    }
+
+    stages = stagesResult.data;
+    renderStage();
   }
 
   function escapeHtml(str) {
@@ -209,50 +237,97 @@
     return div.innerHTML;
   }
 
-  function renderCase(c) {
+  function renderProgress() {
+    return `
+      <div class="progress">
+        ${stages.map((s, i) => `
+          <div class="progress-dot ${i < stageIndex ? 'done' : (i === stageIndex ? 'current' : '')}"></div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderStage() {
+    const stage = stages[stageIndex];
+    answeredCorrectly = false;
+
+    const options = [
+      { key: "a", text: stage.option_a },
+      { key: "b", text: stage.option_b },
+      { key: "c", text: stage.option_c },
+      { key: "d", text: stage.option_d }
+    ];
+
     document.getElementById("case-container").innerHTML = `
       <div class="case-card">
         <div class="case-label">THIS WEEK'S CASE</div>
-        <h1>${escapeHtml(c.title)}</h1>
-        <p class="intro">${escapeHtml(c.story_intro)}</p>
+        <h1>${escapeHtml(currentCase.title)}</h1>
+        ${stageIndex === 0 ? `<p class="intro">${escapeHtml(currentCase.story_intro)}</p>` : ""}
 
-        <div class="clue"><span class="clue-tag">CLUE #1</span>${escapeHtml(c.clue1)}</div>
-        <div class="clue"><span class="clue-tag">CLUE #2</span>${escapeHtml(c.clue2)}</div>
-        <div class="clue"><span class="clue-tag">CLUE #3</span>${escapeHtml(c.clue3)}</div>
+        ${renderProgress()}
 
-        <div class="riddle-box">
-          <h2>${escapeHtml(c.riddle_question)}</h2>
-          <input type="text" id="answer-input" placeholder="Type your answer...">
-          <button id="submit-answer">Submit Answer</button>
-          <div id="result-message"></div>
+        <div class="stage-tag">STAGE ${stageIndex + 1} OF ${stages.length}</div>
+        <div class="clue">${escapeHtml(stage.clue_text)}</div>
+
+        <div class="question-text">${escapeHtml(stage.question)}</div>
+        <div class="options" id="options-list">
+          ${options.map(o => `
+            <button class="option-btn" data-key="${o.key}">${escapeHtml(o.text)}</button>
+          `).join("")}
         </div>
+
+        <div id="result-message"></div>
       </div>
     `;
-    document.getElementById("submit-answer").addEventListener("click", handleSubmit);
+
+    document.querySelectorAll(".option-btn").forEach(btn => {
+      btn.addEventListener("click", () => handleOptionClick(btn, stage));
+    });
   }
 
-  async function handleSubmit() {
-    const select = document.getElementById("child-select");
+  function handleOptionClick(btn, stage) {
+    if (answeredCorrectly) return;
+
+    const allButtons = document.querySelectorAll(".option-btn");
+    const chosenKey = btn.dataset.key;
     const messageEl = document.getElementById("result-message");
-    const answerInput = document.getElementById("answer-input");
+
+    if (chosenKey === stage.correct_option) {
+      answeredCorrectly = true;
+      allButtons.forEach(b => b.disabled = true);
+      btn.classList.add("correct");
+
+      const isLastStage = stageIndex === stages.length - 1;
+
+      if (isLastStage) {
+        finishCase(messageEl);
+      } else {
+        messageEl.className = "correct";
+        messageEl.textContent = "Correct! Moving to the next clue...";
+        setTimeout(() => {
+          stageIndex++;
+          renderStage();
+        }, 1200);
+      }
+    } else {
+      btn.classList.add("incorrect");
+      btn.disabled = true;
+      messageEl.className = "wrong";
+      messageEl.textContent = "Not quite — try one of the other options.";
+    }
+  }
+
+  async function finishCase(messageEl) {
+    const select = document.getElementById("child-select");
 
     if (children.length === 0) {
       messageEl.className = "wrong";
-      messageEl.textContent = "Add a kid profile on the dashboard first!";
+      messageEl.textContent = "Add a kid profile on the dashboard first, then come back to save this win!";
       return;
     }
 
     const childId = select.value;
-    const answer = answerInput.value.trim().toLowerCase();
-    const correctAnswer = currentCase.riddle_answer.trim().toLowerCase();
-
-    if (!answer) return;
-
-    if (answer !== correctAnswer) {
-      messageEl.className = "wrong";
-      messageEl.textContent = "Not quite — take another look at the clues!";
-      return;
-    }
+    const totalPoints = POINTS_PER_STAGE * stages.length;
 
     const { error: insertError } = await supabaseClient.from("solved_cases").insert({
       child_id: childId,
@@ -271,11 +346,10 @@
     }
 
     const child = children.find(c => c.id === childId);
-    await supabaseClient.from("children").update({ points: (child.points || 0) + 10 }).eq("id", childId);
-    child.points = (child.points || 0) + 10;
+    await supabaseClient.from("children").update({ points: (child.points || 0) + totalPoints }).eq("id", childId);
 
-    messageEl.className = "correct";
-    messageEl.textContent = `${currentCase.badge_emoji} Case solved! +10 points for ${child.codename}.`;
+    messageEl.className = "finished";
+    messageEl.textContent = `${currentCase.badge_emoji} Case cracked! +${totalPoints} points for ${child.codename}.`;
   }
 
   init();
