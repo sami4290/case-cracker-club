@@ -161,12 +161,12 @@
 <script>
   const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = null;
 
   async function init() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) {
       window.location.href = "signup.html";
       return;
@@ -178,7 +178,7 @@
 
   async function loadChildren() {
     const listEl = document.getElementById("children-list");
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("children")
       .select("*")
       .order("created_at", { ascending: true });
@@ -218,7 +218,7 @@
 
     if (!codename) return;
 
-    const { error } = await supabase.from("children").insert({
+    const { error } = await supabaseClient.from("children").insert({
       parent_id: currentUser.id,
       codename: codename,
       avatar_emoji: avatar
@@ -237,7 +237,7 @@
   });
 
   async function logout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     window.location.href = "index.html";
   }
 

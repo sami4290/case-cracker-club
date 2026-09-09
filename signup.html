@@ -142,7 +142,7 @@
 <script>
   const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let mode = "signup";
 
@@ -167,9 +167,9 @@
 
     let result;
     if (mode === "signup") {
-      result = await supabase.auth.signUp({ email, password });
+      result = await supabaseClient.auth.signUp({ email, password });
     } else {
-      result = await supabase.auth.signInWithPassword({ email, password });
+      result = await supabaseClient.auth.signInWithPassword({ email, password });
     }
 
     submitBtn.disabled = false;
