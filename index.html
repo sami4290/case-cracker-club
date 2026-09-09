@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink-navy: #16233D;
@@ -407,9 +408,24 @@
 <div class="wrap">
   <nav>
     <div class="logo"><span class="badge">CC</span> Case Cracker Club</div>
-    <a href="signup.html" class="nav-cta">Parent Sign Up</a>
+    <a href="signup.html" class="nav-cta" id="nav-cta">Parent Sign Up</a>
   </nav>
 </div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      const cta = document.getElementById("nav-cta");
+      cta.textContent = "Go to Dashboard";
+      cta.href = "dashboard.html";
+    }
+  })();
+</script>
 
 <div class="wrap hero">
   <div class="folder">
