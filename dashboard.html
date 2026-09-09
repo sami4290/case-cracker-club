@@ -180,6 +180,9 @@
         <button type="submit" class="add-btn">Add Profile</button>
       </div>
     </form>
+    <div id="limit-message" style="display:none; margin-top:14px; padding:12px; background: rgba(200,155,60,0.12); border-radius:8px; color: var(--brass); font-weight:600; font-size:0.9rem;">
+      You've reached the limit of 3 detective profiles per account.
+    </div>
     <div id="dash-message"></div>
   </div>
 </div>
@@ -235,6 +238,7 @@
 
     if (!data || data.length === 0) {
       listEl.innerHTML = '<div class="empty-state">No detective profiles yet — add your first one below.</div>';
+      toggleAddForm(true);
       return;
     }
 
@@ -247,6 +251,14 @@
         <div class="points">${child.points} pts</div>
       </div>
     `).join("");
+
+    toggleAddForm(data.length < 3);
+  }
+
+  function toggleAddForm(show) {
+    document.getElementById("add-child-form").style.display = show ? "flex" : "none";
+    const limitMsg = document.getElementById("limit-message");
+    limitMsg.style.display = show ? "none" : "block";
   }
 
   function escapeHtml(str) {
