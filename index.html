@@ -412,63 +412,6 @@
   </nav>
 </div>
 
-<script>
-  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  (async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-      const navCta = document.getElementById("nav-cta");
-      navCta.textContent = "Go to Dashboard";
-      navCta.href = "dashboard.html";
-
-      const heroCta = document.getElementById("hero-cta");
-      heroCta.textContent = "Go to Your Dashboard";
-      heroCta.href = "dashboard.html";
-
-      const unlockCta = document.getElementById("unlock-case-cta");
-      unlockCta.textContent = "Go to This Week's Case";
-      unlockCta.href = "case.html";
-
-      const footerCta = document.getElementById("footer-cta");
-      footerCta.textContent = "Go to Your Dashboard";
-      footerCta.href = "dashboard.html";
-    }
-  })();
-
-  (async () => {
-    const listEl = document.getElementById("home-leaderboard-list");
-    const { data, error } = await supabaseClient
-      .from("children")
-      .select("codename, avatar_emoji, points")
-      .order("points", { ascending: false })
-      .limit(3);
-
-    if (error || !data || data.length === 0) {
-      listEl.innerHTML = '<div class="board-row"><div class="board-left"><div class="codename">No detectives on the board yet — be the first!</div></div></div>';
-      return;
-    }
-
-    listEl.innerHTML = data.map((child, i) => `
-      <div class="board-row">
-        <div class="board-left">
-          <div class="rank">${String(i + 1).padStart(2, '0')}</div>
-          <div class="avatar">${child.avatar_emoji}</div>
-          <div class="codename">${escapeHomeHtml(child.codename)}</div>
-        </div>
-        <div class="points">${child.points} pts</div>
-      </div>
-    `).join("");
-  })();
-
-  function escapeHomeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
-</script>
 
 <div class="wrap hero">
   <div class="folder">
@@ -586,6 +529,64 @@
     <div>Privacy Policy · For Parents · Contact</div>
   </footer>
 </div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      const navCta = document.getElementById("nav-cta");
+      navCta.textContent = "Go to Dashboard";
+      navCta.href = "dashboard.html";
+
+      const heroCta = document.getElementById("hero-cta");
+      heroCta.textContent = "Go to Your Dashboard";
+      heroCta.href = "dashboard.html";
+
+      const unlockCta = document.getElementById("unlock-case-cta");
+      unlockCta.textContent = "Go to This Week's Case";
+      unlockCta.href = "case.html";
+
+      const footerCta = document.getElementById("footer-cta");
+      footerCta.textContent = "Go to Your Dashboard";
+      footerCta.href = "dashboard.html";
+    }
+  })();
+
+  (async () => {
+    const listEl = document.getElementById("home-leaderboard-list");
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("codename, avatar_emoji, points")
+      .order("points", { ascending: false })
+      .limit(3);
+
+    if (error || !data || data.length === 0) {
+      listEl.innerHTML = '<div class="board-row"><div class="board-left"><div class="codename">No detectives on the board yet — be the first!</div></div></div>';
+      return;
+    }
+
+    listEl.innerHTML = data.map((child, i) => `
+      <div class="board-row">
+        <div class="board-left">
+          <div class="rank">${String(i + 1).padStart(2, '0')}</div>
+          <div class="avatar">${child.avatar_emoji}</div>
+          <div class="codename">${escapeHomeHtml(child.codename)}</div>
+        </div>
+        <div class="points">${child.points} pts</div>
+      </div>
+    `).join("");
+  })();
+
+  function escapeHomeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
 
 </body>
 </html>
