@@ -420,11 +420,54 @@
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
-      const cta = document.getElementById("nav-cta");
-      cta.textContent = "Go to Dashboard";
-      cta.href = "dashboard.html";
+      const navCta = document.getElementById("nav-cta");
+      navCta.textContent = "Go to Dashboard";
+      navCta.href = "dashboard.html";
+
+      const heroCta = document.getElementById("hero-cta");
+      heroCta.textContent = "Go to Your Dashboard";
+      heroCta.href = "dashboard.html";
+
+      const unlockCta = document.getElementById("unlock-case-cta");
+      unlockCta.textContent = "Go to This Week's Case";
+      unlockCta.href = "case.html";
+
+      const footerCta = document.getElementById("footer-cta");
+      footerCta.textContent = "Go to Your Dashboard";
+      footerCta.href = "dashboard.html";
     }
   })();
+
+  (async () => {
+    const listEl = document.getElementById("home-leaderboard-list");
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("codename, avatar_emoji, points")
+      .order("points", { ascending: false })
+      .limit(3);
+
+    if (error || !data || data.length === 0) {
+      listEl.innerHTML = '<div class="board-row"><div class="board-left"><div class="codename">No detectives on the board yet — be the first!</div></div></div>';
+      return;
+    }
+
+    listEl.innerHTML = data.map((child, i) => `
+      <div class="board-row">
+        <div class="board-left">
+          <div class="rank">${String(i + 1).padStart(2, '0')}</div>
+          <div class="avatar">${child.avatar_emoji}</div>
+          <div class="codename">${escapeHomeHtml(child.codename)}</div>
+        </div>
+        <div class="points">${child.points} pts</div>
+      </div>
+    `).join("");
+  })();
+
+  function escapeHomeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
 </script>
 
 <div class="wrap hero">
@@ -433,7 +476,7 @@
     <h1>Every week, a new mystery lands on their desk.</h1>
     <p class="lede">Case Cracker Club gives kids a weekly puzzle to solve, a detective profile to build, and a leaderboard to climb — all in a safe, parent-managed space.</p>
     <div class="hero-ctas">
-      <a href="signup.html" class="btn-primary">Create a Parent Account</a>
+      <a href="signup.html" class="btn-primary" id="hero-cta">Create a Parent Account</a>
       <a href="#how" class="btn-secondary">See How It Works</a>
     </div>
     <div class="stamp">CONFIDENTIAL</div>
@@ -450,7 +493,7 @@
       <div class="lock-badge">🔒 Members Only</div>
       <h3>Clue #1 is waiting</h3>
       <p>Sign up to unlock this week's full case file and get your detective badge started.</p>
-      <a href="signup.html" class="btn-primary" style="display:inline-block;">Unlock This Case</a>
+      <a href="signup.html" class="btn-primary" style="display:inline-block;" id="unlock-case-cta">Unlock This Case</a>
     </div>
     <div class="clue-strip">
       <div class="clue-label">CLUE #1</div>
@@ -497,31 +540,8 @@
     <h2>Top detectives this week</h2>
     <p class="intro">Ranked by cases solved — shown by detective codename only.</p>
 
-    <div class="board-list">
-      <div class="board-row">
-        <div class="board-left">
-          <div class="rank">01</div>
-          <div class="avatar">🕵️</div>
-          <div class="codename">Agent Marigold</div>
-        </div>
-        <div class="points">1,240 pts</div>
-      </div>
-      <div class="board-row">
-        <div class="board-left">
-          <div class="rank">02</div>
-          <div class="avatar">🔍</div>
-          <div class="codename">The Quiet Fox</div>
-        </div>
-        <div class="points">1,180 pts</div>
-      </div>
-      <div class="board-row">
-        <div class="board-left">
-          <div class="rank">03</div>
-          <div class="avatar">🧩</div>
-          <div class="codename">Puzzle Otter</div>
-        </div>
-        <div class="points">1,065 pts</div>
-      </div>
+    <div class="board-list" id="home-leaderboard-list">
+      <div class="board-row"><div class="board-left"><div class="codename">Loading real detectives...</div></div></div>
     </div>
     <a href="leaderboard.html" style="display:inline-block; margin-top:20px; color: var(--brass-light); font-weight:700; text-decoration:none; font-size:0.9rem;">See the full leaderboard →</a>
   </div>
@@ -556,7 +576,7 @@
   <div class="footer-cta" id="signup">
     <h2>Ready to open the club's first case?</h2>
     <p>Create your parent account in under two minutes — your kid's first case is waiting.</p>
-    <a href="signup.html" class="btn-primary" style="background: var(--parchment); color: var(--clue-red);">Create a Parent Account</a>
+    <a href="signup.html" class="btn-primary" style="background: var(--parchment); color: var(--clue-red);" id="footer-cta">Create a Parent Account</a>
   </div>
 </div>
 
