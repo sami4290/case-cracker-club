@@ -92,7 +92,30 @@
 
   .empty-state { color: #6B7690; font-size: 0.95rem; padding: 12px 0; }
 
-  form.add-child { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .avatar-option {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 2px solid rgba(22,35,61,0.15);
+    background: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .avatar-option:hover { border-color: rgba(200,155,60,0.6); }
+  .avatar-option.selected {
+    border-color: var(--brass);
+    background: rgba(200,155,60,0.12);
+  }
+
+  form.add-child { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
 
   select, input[type=text] {
     padding: 10px 12px;
@@ -147,16 +170,15 @@
       <div class="empty-state">Loading...</div>
     </div>
 
-    <form class="add-child" id="add-child-form">
-      <select id="avatar-select">
-        <option value="🕵️">🕵️ Detective</option>
-        <option value="🔍">🔍 Investigator</option>
-        <option value="🧩">🧩 Puzzler</option>
-        <option value="🦉">🦉 Owl</option>
-        <option value="🦊">🦊 Fox</option>
-      </select>
-      <input type="text" id="codename-input" placeholder="Detective codename (e.g. Agent Marigold)" required>
-      <button type="submit" class="add-btn">Add Profile</button>
+    <form class="add-child" id="add-child-form" style="flex-direction: column; align-items: stretch;">
+      <div>
+        <label style="font-weight:700; font-size:0.9rem; display:block; margin-bottom:8px;">Choose an avatar</label>
+        <div class="avatar-grid" id="avatar-grid"></div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" id="codename-input" placeholder="Detective codename (e.g. Agent Marigold)" required>
+        <button type="submit" class="add-btn">Add Profile</button>
+      </div>
     </form>
     <div id="dash-message"></div>
   </div>
@@ -168,6 +190,24 @@
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = null;
+  let selectedAvatar = "🕵️";
+
+  const AVATAR_OPTIONS = ["🕵️", "🔍", "🧩", "🦉", "🦊", "🐺", "🦁", "🐧", "🦅", "🐬", "🐙", "🦝"];
+
+  function renderAvatarGrid() {
+    const grid = document.getElementById("avatar-grid");
+    grid.innerHTML = AVATAR_OPTIONS.map(emoji => `
+      <button type="button" class="avatar-option ${emoji === selectedAvatar ? 'selected' : ''}" data-emoji="${emoji}">${emoji}</button>
+    `).join("");
+
+    grid.querySelectorAll(".avatar-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectedAvatar = btn.dataset.emoji;
+        grid.querySelectorAll(".avatar-option").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+    });
+  }
 
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -177,6 +217,7 @@
     }
     currentUser = session.user;
     document.getElementById("parent-email").textContent = "Signed in as " + currentUser.email;
+    renderAvatarGrid();
     loadChildren();
   }
 
@@ -217,7 +258,7 @@
   document.getElementById("add-child-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const codename = document.getElementById("codename-input").value.trim();
-    const avatar = document.getElementById("avatar-select").value;
+    const avatar = selectedAvatar;
     const messageEl = document.getElementById("dash-message");
 
     if (!codename) return;
@@ -235,6 +276,8 @@
       messageEl.className = "success";
       messageEl.textContent = "Profile added!";
       document.getElementById("codename-input").value = "";
+      selectedAvatar = "🕵️";
+      renderAvatarGrid();
       loadChildren();
       setTimeout(() => { messageEl.style.display = "none"; }, 2000);
     }
