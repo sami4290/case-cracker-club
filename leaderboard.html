@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaderboard — Case Cracker Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--parchment);
+    color: var(--ink-navy);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  .logo { font-family: var(--font-display); font-size: 1.1rem; }
+  .back-link { color: var(--ink-navy); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+
+  h1 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; }
+  p.sub { color: #3B4A63; margin-bottom: 28px; }
+
+  .board {
+    background: var(--ink-navy);
+    color: var(--parchment);
+    border-radius: 14px;
+    padding: 12px 32px;
+  }
+
+  .board-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(243,233,210,0.1);
+  }
+  .board-row:last-child { border-bottom: none; }
+
+  .board-left { display: flex; align-items: center; gap: 14px; }
+
+  .rank { font-family: var(--font-display); color: var(--brass-light); width: 30px; }
+  .rank.gold { color: #E8C766; font-size: 1.1rem; }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--forest-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .codename { font-weight: 700; }
+  .points { font-family: var(--font-display); color: var(--brass-light); font-size: 0.9rem; }
+
+  .empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    color: #6B7690;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">🕵️ Case Cracker Club</div>
+    <a href="index.html" class="back-link">← Home</a>
+  </nav>
+
+  <h1>Top Detectives</h1>
+  <p class="sub">Ranked by cases solved. Shown by detective codename only.</p>
+
+  <div id="board-container">
+    <div class="empty-state">Loading leaderboard...</div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function loadLeaderboard() {
+    const container = document.getElementById("board-container");
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("codename, avatar_emoji, points")
+      .order("points", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      container.innerHTML = '<div class="empty-state">Could not load leaderboard: ' + error.message + '</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state">No detectives on the board yet — be the first to solve a case!</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="board">
+        ${data.map((child, i) => `
+          <div class="board-row">
+            <div class="board-left">
+              <div class="rank ${i === 0 ? 'gold' : ''}">${String(i + 1).padStart(2, '0')}</div>
+              <div class="avatar">${child.avatar_emoji}</div>
+              <div class="codename">${escapeHtml(child.codename)}</div>
+            </div>
+            <div class="points">${child.points} pts</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  loadLeaderboard();
+</script>
+
+</body>
+</html>
