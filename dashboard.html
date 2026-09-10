@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="avatar-render.js"></script>
 <style>
   :root {
     --ink-navy: #16233D;
@@ -87,6 +88,8 @@
     font-weight: 600;
     font-size: 0.82rem;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
   }
 
   .edit-row {
@@ -129,6 +132,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+    overflow: hidden;
   }
 
   .codename { font-weight: 700; }
@@ -239,8 +243,6 @@
   let currentUser = null;
   let selectedAvatar = "🕵️";
   let children = [];
-  let editingChildId = null;
-  let editSelectedAvatar = "🕵️";
 
   const AVATAR_OPTIONS = ["🕵️", "🔍", "🧩", "🦉", "🦊", "🐺", "🦁", "🐧", "🦅", "🐬", "🐙", "🦝"];
 
@@ -298,92 +300,18 @@
   function renderChildrenList() {
     const listEl = document.getElementById("children-list");
 
-    listEl.innerHTML = children.map(child => {
-      if (child.id === editingChildId) {
-        return `
-          <div class="edit-row" id="edit-row-${child.id}">
-            <span class="edit-label">Avatar</span>
-            <div class="avatar-grid" id="edit-avatar-grid"></div>
-            <span class="edit-label">Codename</span>
-            <input type="text" id="edit-codename-input" value="${escapeHtml(child.codename)}">
-            <div class="edit-actions">
-              <button class="save-btn" onclick="saveEdit('${child.id}')">Save</button>
-              <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
-            </div>
-          </div>
-        `;
-      }
-      return `
-        <div class="child-row">
-          <div class="child-left">
-            <div class="avatar">${child.avatar_emoji}</div>
-            <div class="codename">${escapeHtml(child.codename)}</div>
-          </div>
-          <div class="child-right">
-            <div class="points">${child.points} pts</div>
-            <button class="edit-btn" onclick="startEdit('${child.id}')">Edit</button>
-          </div>
+    listEl.innerHTML = children.map(child => `
+      <div class="child-row">
+        <div class="child-left">
+          <div class="avatar">${renderChildAvatar(child, 40)}</div>
+          <div class="codename">${escapeHtml(child.codename)}</div>
         </div>
-      `;
-    }).join("");
-
-    if (editingChildId) {
-      renderEditAvatarGrid();
-    }
-  }
-
-  function renderEditAvatarGrid() {
-    const grid = document.getElementById("edit-avatar-grid");
-    if (!grid) return;
-    grid.innerHTML = AVATAR_OPTIONS.map(emoji => `
-      <button type="button" class="avatar-option ${emoji === editSelectedAvatar ? 'selected' : ''}" data-emoji="${emoji}">${emoji}</button>
+        <div class="child-right">
+          <div class="points">${child.points} pts</div>
+          <a href="avatar-creator.html?child=${child.id}" class="edit-btn">Edit</a>
+        </div>
+      </div>
     `).join("");
-
-    grid.querySelectorAll(".avatar-option").forEach(btn => {
-      btn.addEventListener("click", () => {
-        editSelectedAvatar = btn.dataset.emoji;
-        grid.querySelectorAll(".avatar-option").forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-      });
-    });
-  }
-
-  function startEdit(childId) {
-    const child = children.find(c => c.id === childId);
-    if (!child) return;
-    editingChildId = childId;
-    editSelectedAvatar = child.avatar_emoji;
-    renderChildrenList();
-  }
-
-  function cancelEdit() {
-    editingChildId = null;
-    renderChildrenList();
-  }
-
-  async function saveEdit(childId) {
-    const input = document.getElementById("edit-codename-input");
-    const newCodename = input.value.trim();
-    const messageEl = document.getElementById("dash-message");
-
-    if (!newCodename) return;
-
-    const { error } = await supabaseClient
-      .from("children")
-      .update({ codename: newCodename, avatar_emoji: editSelectedAvatar })
-      .eq("id", childId);
-
-    if (error) {
-      messageEl.className = "error";
-      messageEl.textContent = error.message;
-      return;
-    }
-
-    editingChildId = null;
-    messageEl.className = "success";
-    messageEl.textContent = "Profile updated!";
-    loadChildren();
-    setTimeout(() => { messageEl.style.display = "none"; }, 2000);
   }
 
   function toggleAddForm(show) {
