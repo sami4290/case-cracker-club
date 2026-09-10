@@ -80,34 +80,47 @@ const DEFAULT_AVATAR_CONFIG = {
   details: ""
 };
 
+const STARTER_LOOKS = [
+  { skinColor: "f2d3b1", hair: "short05", hairColor: "724133", eyes: "variant04", eyebrows: "variant01", mouth: "variant05", glasses: "", earrings: "", details: "" },
+  { skinColor: "edb98a", hair: "long08", hairColor: "2c1b18", eyes: "variant12", eyebrows: "variant04", mouth: "variant10", glasses: "", earrings: "variant02", details: "" },
+  { skinColor: "d08b5b", hair: "short10", hairColor: "4a312c", eyes: "variant08", eyebrows: "variant07", mouth: "variant15", glasses: "variant01", earrings: "", details: "" },
+  { skinColor: "f2d3b1", hair: "long15", hairColor: "d6b370", eyes: "variant16", eyebrows: "variant10", mouth: "variant20", glasses: "", earrings: "", details: "blush" },
+  { skinColor: "ae5d29", hair: "short15", hairColor: "2c1b18", eyes: "variant20", eyebrows: "variant13", mouth: "variant25", glasses: "", earrings: "", details: "" },
+  { skinColor: "8d5524", hair: "long22", hairColor: "a55728", eyes: "variant24", eyebrows: "variant01", mouth: "variant28", glasses: "", earrings: "variant04", details: "" },
+  { skinColor: "5c3a21", hair: "short19", hairColor: "d6b370", eyes: "variant01", eyebrows: "variant04", mouth: "variant01", glasses: "variant03", earrings: "", details: "" },
+  { skinColor: "edb98a", hair: "long02", hairColor: "b58143", eyes: "variant26", eyebrows: "variant07", mouth: "variant30", glasses: "", earrings: "variant06", details: "freckles" },
+  { skinColor: "d08b5b", hair: "short01", hairColor: "a55728", eyes: "variant08", eyebrows: "variant13", mouth: "variant15", glasses: "", earrings: "", details: "" },
+  { skinColor: "f2d3b1", hair: "long15", hairColor: "724133", eyes: "variant12", eyebrows: "variant10", mouth: "variant20", glasses: "variant05", earrings: "", details: "" }
+];
+
 function buildAvatarUrl(rawConfig, size) {
   const c = Object.assign({}, DEFAULT_AVATAR_CONFIG, rawConfig || {});
   const params = new URLSearchParams();
   params.set("seed", "detective");
   params.set("size", String(size));
   params.set("skinColor", c.skinColor);
-  params.set("hair", c.hair);
+  params.set("hairVariant", c.hair);
   params.set("hairColor", c.hairColor);
-  params.set("eyes", c.eyes);
-  params.set("eyebrows", c.eyebrows);
-  params.set("mouth", c.mouth);
+  params.set("eyesVariant", c.eyes);
+  params.set("eyebrowsVariant", c.eyebrows);
+  params.set("mouthVariant", c.mouth);
 
   if (c.glasses) {
-    params.set("glasses", c.glasses);
+    params.set("glassesVariant", c.glasses);
     params.set("glassesProbability", "100");
   } else {
     params.set("glassesProbability", "0");
   }
 
   if (c.earrings) {
-    params.set("earrings", c.earrings);
+    params.set("earringsVariant", c.earrings);
     params.set("earringsProbability", "100");
   } else {
     params.set("earringsProbability", "0");
   }
 
   if (c.details) {
-    params.set("details", c.details);
+    params.set("detailsVariant", c.details);
     params.set("detailsProbability", "100");
   } else {
     params.set("detailsProbability", "0");
