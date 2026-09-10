@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Detective — Case Cracker Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="avatar-render.js"></script>
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --clue-red: #A63D40;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--parchment);
+    color: var(--ink-navy);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .logo { font-family: var(--font-display); font-size: 1.1rem; }
+  .back-link { color: var(--ink-navy); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+
+  h1 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 24px; }
+
+  .preview-panel {
+    background: var(--ink-navy);
+    border-radius: 14px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 24px;
+  }
+  .preview-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: var(--parchment-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 3px solid var(--brass);
+  }
+  .preview-info { color: var(--parchment); flex: 1; }
+  .preview-info label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--parchment-dim);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .preview-info input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(243,233,210,0.25);
+    background: rgba(243,233,210,0.08);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 1rem;
+  }
+
+  .category {
+    background: white;
+    border: 1.5px solid rgba(22,35,61,0.12);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .category h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  .option-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .option-btn {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    border: 2px solid rgba(22,35,61,0.15);
+    background: var(--parchment);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0;
+  }
+  .option-btn.selected {
+    border-color: var(--brass);
+    background: rgba(200,155,60,0.12);
+  }
+  .option-btn svg { width: 100%; height: 100%; }
+
+  .save-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--parchment);
+    padding: 16px 0;
+    display: flex;
+    gap: 12px;
+  }
+  .btn {
+    padding: 14px 26px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.98rem;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+  .btn-primary { background: var(--brass); color: var(--ink-navy); flex: 1; }
+  .btn-secondary { background: transparent; color: var(--ink-navy); border: 1.5px solid rgba(22,35,61,0.2); }
+
+  #save-message {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    display: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  #save-message.error { background: rgba(166,61,64,0.12); color: var(--clue-red); display: block; }
+  #save-message.success { background: rgba(47,93,80,0.12); color: var(--forest-teal); display: block; }
+
+  .loading-state { text-align: center; padding: 60px 0; color: #6B7690; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">🕵️ Case Cracker Club</div>
+    <a href="dashboard.html" class="back-link">← Dashboard</a>
+  </nav>
+
+  <div id="page-content">
+    <div class="loading-state">Loading detective profile...</div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const CATEGORIES = [
+    { key: "body", label: "Body", options: SKIN_TONES },
+    { key: "hairStyle", label: "Hair Style", options: HAIR_STYLE_IDS },
+    { key: "hairColor", label: "Hair Color", options: HAIR_COLORS },
+    { key: "eyes", label: "Eyes", options: EYE_STYLE_IDS },
+    { key: "nose", label: "Nose", options: NOSE_STYLE_IDS },
+    { key: "ears", label: "Ears", options: EAR_STYLE_IDS },
+    { key: "outfit", label: "Clothes", options: OUTFIT_STYLE_IDS },
+    { key: "outfitColor", label: "Clothes Color", options: OUTFIT_COLORS }
+  ];
+
+  let currentUser = null;
+  let childId = null;
+  let child = null;
+  let config = Object.assign({}, DEFAULT_AVATAR_CONFIG);
+
+  function getChildIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("child");
+  }
+
+  async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = "signup.html";
+      return;
+    }
+    currentUser = session.user;
+
+    childId = getChildIdFromUrl();
+    if (!childId) {
+      document.getElementById("page-content").innerHTML = '<div class="loading-state">No detective selected. <a href="dashboard.html">Go back</a></div>';
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("*")
+      .eq("id", childId)
+      .single();
+
+    if (error || !data || data.parent_id !== currentUser.id) {
+      document.getElementById("page-content").innerHTML = '<div class="loading-state">Could not load this profile. <a href="dashboard.html">Go back</a></div>';
+      return;
+    }
+
+    child = data;
+    const existingConfig = parseAvatarConfig(child.avatar_config);
+    config = existingConfig ? Object.assign({}, DEFAULT_AVATAR_CONFIG, existingConfig) : Object.assign({}, DEFAULT_AVATAR_CONFIG);
+
+    renderPage();
+  }
+
+  function renderPage() {
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <h1>Create Your Detective</h1>
+
+      <div class="preview-panel">
+        <div class="preview-circle" id="preview-circle"></div>
+        <div class="preview-info">
+          <label for="codename-input">Detective codename</label>
+          <input type="text" id="codename-input" value="${escapeHtml(child.codename)}">
+        </div>
+      </div>
+
+      <div id="categories-container"></div>
+
+      <div class="save-bar">
+        <button class="btn btn-primary" id="save-btn">Save Detective</button>
+        <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
+      </div>
+      <div id="save-message"></div>
+    `;
+
+    renderPreview();
+    renderCategories();
+
+    document.getElementById("save-btn").addEventListener("click", saveProfile);
+  }
+
+  function renderPreview() {
+    document.getElementById("preview-circle").innerHTML = buildAvatarSVG(config, 104);
+  }
+
+  function renderCategories() {
+    const container = document.getElementById("categories-container");
+    container.innerHTML = CATEGORIES.map(cat => `
+      <div class="category">
+        <h3>${cat.label}</h3>
+        <div class="option-row" id="options-${cat.key}"></div>
+      </div>
+    `).join("");
+
+    CATEGORIES.forEach(cat => {
+      renderCategoryOptions(cat);
+    });
+  }
+
+  function renderCategoryOptions(cat) {
+    const row = document.getElementById(`options-${cat.key}`);
+    row.innerHTML = cat.options.map(opt => {
+      const previewConfig = Object.assign({}, config, { [cat.key]: opt.id });
+      const isSelected = config[cat.key] === opt.id;
+      return `<button type="button" class="option-btn ${isSelected ? 'selected' : ''}" data-key="${cat.key}" data-id="${opt.id}" title="${opt.label}">${buildAvatarSVG(previewConfig, 52)}</button>`;
+    }).join("");
+
+    row.querySelectorAll(".option-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        config[btn.dataset.key] = btn.dataset.id;
+        renderPreview();
+        renderCategoryOptions(cat);
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function saveProfile() {
+    const codename = document.getElementById("codename-input").value.trim();
+    const messageEl = document.getElementById("save-message");
+
+    if (!codename) return;
+
+    const { error } = await supabaseClient
+      .from("children")
+      .update({
+        codename: codename,
+        avatar_config: config,
+        avatar_emoji: "🕵️"
+      })
+      .eq("id", childId);
+
+    if (error) {
+      messageEl.className = "error";
+      messageEl.textContent = error.message;
+      return;
+    }
+
+    messageEl.className = "success";
+    messageEl.textContent = "Saved! Heading back to your dashboard...";
+    setTimeout(() => { window.location.href = "dashboard.html"; }, 900);
+  }
+
+  init();
+</script>
+
+</body>
+</html>

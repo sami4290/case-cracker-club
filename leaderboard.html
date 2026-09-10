@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="avatar-render.js"></script>
 <style>
   :root {
     --ink-navy: #16233D;
@@ -68,6 +69,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
+    overflow: hidden;
   }
 
   .codename { font-weight: 700; }
@@ -113,7 +115,7 @@
     const container = document.getElementById("board-container");
     const { data, error } = await supabaseClient
       .from("children")
-      .select("codename, avatar_emoji, points")
+      .select("codename, avatar_emoji, avatar_config, points")
       .order("points", { ascending: false })
       .limit(20);
 
@@ -133,7 +135,7 @@
           <div class="board-row">
             <div class="board-left">
               <div class="rank ${i === 0 ? 'gold' : ''}">${String(i + 1).padStart(2, '0')}</div>
-              <div class="avatar">${child.avatar_emoji}</div>
+              <div class="avatar">${renderChildAvatar(child, 38)}</div>
               <div class="codename">${escapeHtml(child.codename)}</div>
             </div>
             <div class="points">${child.points} pts</div>
