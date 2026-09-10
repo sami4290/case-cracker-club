@@ -37,7 +37,9 @@
   .logo { font-family: var(--font-display); font-size: 1.1rem; }
   .back-link { color: var(--ink-navy); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
 
-  h1 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 24px; }
+  h1 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 6px; }
+  .credit { font-size: 0.78rem; color: #6B7690; margin-bottom: 20px; }
+  .credit a { color: #6B7690; }
 
   .preview-panel {
     background: var(--ink-navy);
@@ -49,8 +51,8 @@
     margin-bottom: 24px;
   }
   .preview-circle {
-    width: 110px;
-    height: 110px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     background: var(--parchment-dim);
     display: flex;
@@ -60,6 +62,7 @@
     flex-shrink: 0;
     border: 3px solid var(--brass);
   }
+  .preview-circle img { width: 100%; height: 100%; }
   .preview-info { color: var(--parchment); flex: 1; }
   .preview-info label {
     display: block;
@@ -99,8 +102,8 @@
   }
   .option-btn {
     flex-shrink: 0;
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
     border-radius: 10px;
     border: 2px solid rgba(22,35,61,0.15);
     background: var(--parchment);
@@ -111,11 +114,19 @@
     overflow: hidden;
     padding: 0;
   }
-  .option-btn.selected {
-    border-color: var(--brass);
-    background: rgba(200,155,60,0.12);
+  .option-btn img { width: 100%; height: 100%; }
+  .option-btn.selected { border-color: var(--brass); background: rgba(200,155,60,0.12); }
+
+  .swatch-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    padding: 0;
   }
-  .option-btn svg { width: 100%; height: 100%; }
+  .swatch-btn.selected { border-color: var(--brass); }
 
   .save-bar {
     position: sticky;
@@ -171,14 +182,15 @@
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const CATEGORIES = [
-    { key: "body", label: "Body", options: SKIN_TONES },
-    { key: "hairStyle", label: "Hair Style", options: HAIR_STYLE_IDS },
-    { key: "hairColor", label: "Hair Color", options: HAIR_COLORS },
-    { key: "eyes", label: "Eyes", options: EYE_STYLE_IDS },
-    { key: "nose", label: "Nose", options: NOSE_STYLE_IDS },
-    { key: "ears", label: "Ears", options: EAR_STYLE_IDS },
-    { key: "outfit", label: "Clothes", options: OUTFIT_STYLE_IDS },
-    { key: "outfitColor", label: "Clothes Color", options: OUTFIT_COLORS }
+    { key: "skinColor", label: "Skin Tone", options: SKIN_COLORS, type: "color" },
+    { key: "hair", label: "Hair Style", options: HAIR_STYLES, type: "avatar" },
+    { key: "hairColor", label: "Hair Color", options: HAIR_COLORS, type: "color" },
+    { key: "eyebrows", label: "Eyebrows", options: EYEBROW_STYLES, type: "avatar" },
+    { key: "eyes", label: "Eyes", options: EYE_STYLES, type: "avatar" },
+    { key: "mouth", label: "Mouth", options: MOUTH_STYLES, type: "avatar" },
+    { key: "glasses", label: "Glasses", options: GLASSES_STYLES, type: "avatar" },
+    { key: "earrings", label: "Earrings", options: EARRING_STYLES, type: "avatar" },
+    { key: "details", label: "Extra Detail", options: DETAIL_STYLES, type: "avatar" }
   ];
 
   let currentUser = null;
@@ -227,6 +239,7 @@
     const content = document.getElementById("page-content");
     content.innerHTML = `
       <h1>Create Your Detective</h1>
+      <div class="credit">Avatar art: "Adventurer" by Lisa Wischofsky, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>, via DiceBear</div>
 
       <div class="preview-panel">
         <div class="preview-circle" id="preview-circle"></div>
@@ -252,7 +265,8 @@
   }
 
   function renderPreview() {
-    document.getElementById("preview-circle").innerHTML = buildAvatarSVG(config, 104);
+    const url = buildAvatarUrl(config, 200);
+    document.getElementById("preview-circle").innerHTML = `<img src="${url}" alt="preview">`;
   }
 
   function renderCategories() {
@@ -271,13 +285,22 @@
 
   function renderCategoryOptions(cat) {
     const row = document.getElementById(`options-${cat.key}`);
-    row.innerHTML = cat.options.map(opt => {
-      const previewConfig = Object.assign({}, config, { [cat.key]: opt.id });
-      const isSelected = config[cat.key] === opt.id;
-      return `<button type="button" class="option-btn ${isSelected ? 'selected' : ''}" data-key="${cat.key}" data-id="${opt.id}" title="${opt.label}">${buildAvatarSVG(previewConfig, 52)}</button>`;
-    }).join("");
 
-    row.querySelectorAll(".option-btn").forEach(btn => {
+    if (cat.type === "color") {
+      row.innerHTML = cat.options.map(opt => {
+        const isSelected = config[cat.key] === opt.id;
+        return `<button type="button" class="swatch-btn ${isSelected ? 'selected' : ''}" data-key="${cat.key}" data-id="${opt.id}" title="${opt.label}" style="background:#${opt.id};"></button>`;
+      }).join("");
+    } else {
+      row.innerHTML = cat.options.map(opt => {
+        const previewConfig = Object.assign({}, config, { [cat.key]: opt.id });
+        const isSelected = config[cat.key] === opt.id;
+        const url = buildAvatarUrl(previewConfig, 58);
+        return `<button type="button" class="option-btn ${isSelected ? 'selected' : ''}" data-key="${cat.key}" data-id="${opt.id}" title="${opt.label}"><img src="${url}" alt="${opt.label}"></button>`;
+      }).join("");
+    }
+
+    row.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", () => {
         config[btn.dataset.key] = btn.dataset.id;
         renderPreview();
