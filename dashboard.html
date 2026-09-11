@@ -27,16 +27,23 @@
     color: var(--ink-navy);
     min-height: 100vh;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
   nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 36px;
+    margin-bottom: 30px;
   }
   .logo {
     font-family: var(--font-display);
     font-size: 1.1rem;
+  }
+  .nav-links { display: flex; gap: 16px; align-items: center; }
+  .nav-links a {
+    color: var(--ink-navy);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.9rem;
   }
   .logout {
     background: transparent;
@@ -49,8 +56,69 @@
     cursor: pointer;
     font-size: 0.9rem;
   }
-  h1 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; }
-  p.sub { color: #3B4A63; margin-bottom: 32px; }
+
+  h1 { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 6px; }
+  p.sub { color: #3B4A63; margin-bottom: 24px; }
+
+  .case-banner {
+    background: var(--ink-navy);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .case-banner .case-label {
+    font-family: var(--font-display);
+    color: var(--brass-light);
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+  }
+  .case-banner h2 {
+    font-family: var(--font-display);
+    color: var(--parchment);
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+  .case-banner .badge-emoji { font-size: 1.8rem; margin-right: 8px; }
+  .case-banner .btn-solve {
+    background: var(--brass);
+    color: var(--ink-navy);
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: white;
+    border: 1.5px solid rgba(22,35,61,0.12);
+    border-radius: 10px;
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 130px;
+  }
+  .stat-pill .stat-value {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--brass);
+  }
+  .stat-pill .stat-label {
+    font-size: 0.8rem;
+    color: #6B7690;
+    font-weight: 600;
+  }
 
   .card {
     background: white;
@@ -66,19 +134,48 @@
     margin-bottom: 18px;
   }
 
-  .child-row {
+  .child-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  @media (min-width: 560px) {
+    .child-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .child-card {
+    border: 1.5px solid rgba(22,35,61,0.1);
+    border-radius: 12px;
+    padding: 18px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(22,35,61,0.08);
+    gap: 14px;
+    background: var(--parchment);
   }
-  .child-row:last-child { border-bottom: none; }
-
-  .child-left { display: flex; align-items: center; gap: 14px; }
-  .child-right { display: flex; align-items: center; gap: 14px; }
-
-  .edit-btn {
+  .child-card .avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--forest-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .child-card .child-info { flex: 1; min-width: 0; }
+  .child-card .codename { font-weight: 700; font-size: 1.02rem; }
+  .child-card .child-stats {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #6B7690;
+  }
+  .child-card .child-stats .points-val { color: var(--brass); font-weight: 700; }
+  .child-card .edit-btn {
     background: transparent;
     border: 1.5px solid rgba(22,35,61,0.2);
     color: var(--ink-navy);
@@ -86,57 +183,12 @@
     border-radius: 6px;
     font-family: var(--font-body);
     font-weight: 600;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
+    flex-shrink: 0;
   }
-
-  .edit-row {
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(22,35,61,0.08);
-  }
-  .edit-row:last-child { border-bottom: none; }
-  .edit-row .edit-label { font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 8px; }
-  .edit-row input[type=text] { width: 100%; margin-bottom: 12px; }
-  .edit-actions { display: flex; gap: 10px; }
-  .save-btn {
-    background: var(--forest-teal);
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 6px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 0.88rem;
-  }
-  .cancel-btn {
-    background: transparent;
-    border: 1.5px solid rgba(22,35,61,0.2);
-    color: var(--ink-navy);
-    padding: 8px 18px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 0.88rem;
-  }
-
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--forest-teal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    overflow: hidden;
-  }
-
-  .codename { font-weight: 700; }
-  .points { color: var(--brass); font-family: var(--font-display); font-size: 0.85rem; }
 
   .empty-state { color: #6B7690; font-size: 0.95rem; padding: 12px 0; }
 
@@ -202,15 +254,39 @@
 <div class="wrap">
   <nav>
     <div class="logo">🕵️ Case Cracker Club</div>
-    <div style="display:flex; gap:12px; align-items:center;">
-      <a href="case.html" style="color:var(--ink-navy); font-weight:700; text-decoration:none; font-size:0.9rem;">This Week's Case</a>
-      <a href="leaderboard.html" style="color:var(--ink-navy); font-weight:700; text-decoration:none; font-size:0.9rem;">Leaderboard</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="case.html">This Week's Case</a>
+      <a href="leaderboard.html">Leaderboard</a>
       <button class="logout" onclick="logout()">Log Out</button>
     </div>
   </nav>
 
-  <h1>Welcome back</h1>
+  <h1 id="greeting">Welcome back</h1>
   <p class="sub" id="parent-email">Loading your account...</p>
+
+  <div class="case-banner" id="case-banner" style="display:none;">
+    <div>
+      <div class="case-label">THIS WEEK'S CASE</div>
+      <h2><span class="badge-emoji" id="case-emoji"></span><span id="case-title"></span></h2>
+    </div>
+    <a href="case.html" class="btn-solve">Solve Now →</a>
+  </div>
+
+  <div class="stats-row" id="stats-row" style="display:none;">
+    <div class="stat-pill">
+      <div class="stat-value" id="stat-detectives">0</div>
+      <div class="stat-label">Detectives</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-value" id="stat-points">0</div>
+      <div class="stat-label">Total Points</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-value" id="stat-solved">0</div>
+      <div class="stat-label">Cases Solved</div>
+    </div>
+  </div>
 
   <div class="card">
     <h2>Your Kids' Detective Profiles</h2>
@@ -243,6 +319,7 @@
   let currentUser = null;
   let selectedAvatar = "🕵️";
   let children = [];
+  let solvedCounts = {};
 
   const AVATAR_OPTIONS = ["🕵️", "🔍", "🧩", "🦉", "🦊", "🐺", "🦁", "🐧", "🦅", "🐬", "🐙", "🦝"];
 
@@ -261,6 +338,15 @@
     });
   }
 
+  function setGreeting() {
+    const hour = new Date().getHours();
+    let greeting = "Welcome back";
+    if (hour < 12) greeting = "Good morning, Detective HQ";
+    else if (hour < 18) greeting = "Good afternoon, Detective HQ";
+    else greeting = "Good evening, Detective HQ";
+    document.getElementById("greeting").textContent = greeting;
+  }
+
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) {
@@ -269,8 +355,26 @@
     }
     currentUser = session.user;
     document.getElementById("parent-email").textContent = "Signed in as " + currentUser.email;
+    setGreeting();
     renderAvatarGrid();
+    loadCaseBanner();
     loadChildren();
+  }
+
+  async function loadCaseBanner() {
+    const { data, error } = await supabaseClient
+      .from("cases")
+      .select("title, badge_emoji")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) return;
+
+    document.getElementById("case-emoji").textContent = data.badge_emoji || "🔦";
+    document.getElementById("case-title").textContent = data.title;
+    document.getElementById("case-banner").style.display = "flex";
   }
 
   async function loadChildren() {
@@ -293,25 +397,53 @@
       return;
     }
 
+    await loadSolvedCounts();
     renderChildrenList();
+    renderStats();
     toggleAddForm(children.length < 3);
+  }
+
+  async function loadSolvedCounts() {
+    const ids = children.map(c => c.id);
+    const { data, error } = await supabaseClient
+      .from("solved_cases")
+      .select("child_id")
+      .in("child_id", ids);
+
+    solvedCounts = {};
+    if (!error && data) {
+      data.forEach(row => {
+        solvedCounts[row.child_id] = (solvedCounts[row.child_id] || 0) + 1;
+      });
+    }
+  }
+
+  function renderStats() {
+    const totalPoints = children.reduce((sum, c) => sum + (c.points || 0), 0);
+    const totalSolved = Object.values(solvedCounts).reduce((sum, n) => sum + n, 0);
+    document.getElementById("stat-detectives").textContent = children.length;
+    document.getElementById("stat-points").textContent = totalPoints;
+    document.getElementById("stat-solved").textContent = totalSolved;
+    document.getElementById("stats-row").style.display = "flex";
   }
 
   function renderChildrenList() {
     const listEl = document.getElementById("children-list");
 
-    listEl.innerHTML = children.map(child => `
-      <div class="child-row">
-        <div class="child-left">
-          <div class="avatar">${renderChildAvatar(child, 40)}</div>
+    listEl.innerHTML = `<div class="child-grid">` + children.map(child => `
+      <div class="child-card">
+        <div class="avatar">${renderChildAvatar(child, 58)}</div>
+        <div class="child-info">
           <div class="codename">${escapeHtml(child.codename)}</div>
+          <div class="child-stats">
+            <span class="points-val">${child.points} pts</span>
+            <span>·</span>
+            <span>${solvedCounts[child.id] || 0} solved</span>
+          </div>
         </div>
-        <div class="child-right">
-          <div class="points">${child.points} pts</div>
-          <a href="avatar-creator.html?child=${child.id}" class="edit-btn">Edit</a>
-        </div>
+        <a href="avatar-creator.html?child=${child.id}" class="edit-btn">Edit</a>
       </div>
-    `).join("");
+    `).join("") + `</div>`;
   }
 
   function toggleAddForm(show) {
