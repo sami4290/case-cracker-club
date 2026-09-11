@@ -95,6 +95,23 @@
     font-size: 1rem;
     cursor: pointer;
   }
+  .consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .consent-row input[type=checkbox] {
+    width: auto;
+    margin: 3px 0 0 0;
+    flex-shrink: 0;
+  }
+  .consent-row label {
+    margin: 0;
+    color: var(--parchment-dim);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
   #message {
     margin-top: 16px;
     font-size: 0.9rem;
@@ -131,6 +148,11 @@
     <label for="password">Password</label>
     <input type="password" id="password" placeholder="At least 6 characters" required minlength="6">
 
+    <div class="consent-row" id="consent-row">
+      <input type="checkbox" id="consent-checkbox" required>
+      <label for="consent-checkbox">I am the parent or legal guardian of any child I add to this account, and I consent to their use of Case Cracker Club under this account.</label>
+    </div>
+
     <button type="submit" class="submit" id="submit-btn">Create Account</button>
   </form>
 
@@ -153,6 +175,11 @@
     document.getElementById("heading").textContent = mode === "signup" ? "Create Your Parent Account" : "Welcome Back";
     document.getElementById("submit-btn").textContent = mode === "signup" ? "Create Account" : "Log In";
     document.getElementById("message").style.display = "none";
+
+    const consentRow = document.getElementById("consent-row");
+    const consentCheckbox = document.getElementById("consent-checkbox");
+    consentRow.style.display = mode === "signup" ? "flex" : "none";
+    consentCheckbox.required = mode === "signup";
   }
 
   document.getElementById("auth-form").addEventListener("submit", async (e) => {
@@ -167,7 +194,16 @@
 
     let result;
     if (mode === "signup") {
-      result = await supabaseClient.auth.signUp({ email, password });
+      result = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            parent_consent: true,
+            parent_consent_at: new Date().toISOString()
+          }
+        }
+      });
     } else {
       result = await supabaseClient.auth.signInWithPassword({ email, password });
     }
