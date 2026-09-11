@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Files — Case Cracker Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --clue-red: #A63D40;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--parchment);
+    color: var(--ink-navy);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  .logo { font-family: var(--font-display); font-size: 1.1rem; }
+  .nav-links { display: flex; gap: 16px; align-items: center; }
+  .nav-links a { color: var(--ink-navy); font-weight: 700; text-decoration: none; font-size: 0.9rem; }
+
+  h1 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; }
+  p.sub { color: #3B4A63; margin-bottom: 24px; }
+
+  .section-label {
+    font-family: var(--font-display);
+    color: var(--clue-red);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    margin-top: 36px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  .investigation-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+  .investigation-card {
+    background: var(--ink-navy);
+    color: var(--parchment);
+    border: 1.5px solid var(--brass);
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+  .investigation-card .badge { font-size: 2rem; }
+  .investigation-card h3 { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; }
+  .investigation-card p { font-size: 0.86rem; color: var(--parchment-dim); margin-bottom: 8px; }
+  .investigation-card .meta { font-size: 0.78rem; color: var(--brass-light); font-weight: 700; }
+
+  .case-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 640px) {
+    .case-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .case-card {
+    background: white;
+    border: 1.5px solid rgba(22,35,61,0.12);
+    border-radius: 12px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--ink-navy);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .case-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(22,35,61,0.12); }
+
+  .case-badge { font-size: 1.8rem; }
+  .case-card h3 { font-family: var(--font-display); font-size: 1.02rem; line-height: 1.35; }
+  .case-card p { font-size: 0.88rem; color: #3B4A63; flex: 1; }
+  .case-date { font-size: 0.78rem; color: var(--brass); font-weight: 700; }
+
+  .empty-state { color: #6B7690; padding: 20px 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">🕵️ Case Cracker Club</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="case.html">This Week's Case</a>
+      <a href="leaderboard.html">Leaderboard</a>
+    </div>
+  </nav>
+
+  <h1>Case Files</h1>
+  <p class="sub">Every mystery the club has ever cracked, all in one place — browse and reopen any of them, any time. Solving from here is just for fun, points only count for this week's live case.</p>
+
+  <div class="section-label" id="investigations-label" style="display:none;">FULL INVESTIGATIONS</div>
+  <div class="investigation-grid" id="investigation-grid"></div>
+
+  <div class="section-label">QUICK CASES</div>
+  <div class="case-grid" id="case-grid">
+    <div class="empty-state">Loading past cases...</div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  async function loadInvestigations() {
+    const grid = document.getElementById("investigation-grid");
+    const label = document.getElementById("investigations-label");
+    const today = new Date().toISOString().slice(0, 10);
+
+    const { data, error } = await supabaseClient
+      .from("mystery_cases")
+      .select("*")
+      .order("week_start_date", { ascending: false });
+
+    if (error || !data || data.length === 0) return;
+
+    const pastCases = [];
+    let currentFound = false;
+    for (const c of data) {
+      if (!currentFound && c.week_start_date && c.week_start_date <= today) {
+        currentFound = true;
+        continue;
+      }
+      pastCases.push(c);
+    }
+
+    if (pastCases.length === 0) return;
+
+    label.style.display = "block";
+    grid.innerHTML = pastCases.map(c => `
+      <a href="investigation.html?id=${c.id}" class="investigation-card">
+        <div class="badge">${c.badge_emoji || "🔎"}</div>
+        <div>
+          <h3>${escapeHtml(c.title)}</h3>
+          <p>${escapeHtml(c.setting)}</p>
+          <div class="meta">${escapeHtml(c.difficulty).toUpperCase()} · ${formatDate(c.week_start_date)}</div>
+        </div>
+      </a>
+    `).join("");
+  }
+
+  async function loadQuickCases() {
+    const grid = document.getElementById("case-grid");
+    const today = new Date().toISOString().slice(0, 10);
+
+    const { data, error } = await supabaseClient
+      .from("cases")
+      .select("*")
+      .order("week_start_date", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No quick cases yet.</div>';
+      return;
+    }
+
+    const pastCases = [];
+    let currentFound = false;
+    for (const c of data) {
+      if (!currentFound && c.week_start_date && c.week_start_date <= today) {
+        currentFound = true;
+        continue;
+      }
+      pastCases.push(c);
+    }
+
+    if (pastCases.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No past quick cases yet.</div>';
+      return;
+    }
+
+    grid.innerHTML = pastCases.map(c => `
+      <a href="case.html?id=${c.id}" class="case-card">
+        <div class="case-badge">${c.badge_emoji || "🔎"}</div>
+        <h3>${escapeHtml(c.title)}</h3>
+        <p>${escapeHtml((c.story_intro || "").slice(0, 100))}${(c.story_intro || "").length > 100 ? "…" : ""}</p>
+        <div class="case-date">${formatDate(c.week_start_date)}</div>
+      </a>
+    `).join("");
+  }
+
+  loadInvestigations();
+  loadQuickCases();
+</script>
+
+</body>
+</html>

@@ -258,7 +258,7 @@
       <a href="index.html">Home</a>
       <a href="case.html">This Week's Case</a>
       <a href="leaderboard.html">Leaderboard</a>
-      <a href="depository.html">Depository</a>
+      <a href="casefiles.html">🗂️ Case Files</a>
       <button class="logout" onclick="logout()">Log Out</button>
     </div>
   </nav>
@@ -268,10 +268,10 @@
 
   <div class="case-banner" id="case-banner" style="display:none;">
     <div>
-      <div class="case-label">THIS WEEK'S CASE</div>
+      <div class="case-label" id="case-label">THIS WEEK'S CASE</div>
       <h2><span class="badge-emoji" id="case-emoji"></span><span id="case-title"></span></h2>
     </div>
-    <a href="case.html" class="btn-solve">Solve Now →</a>
+    <a href="case.html" id="case-solve-link" class="btn-solve">Solve Now →</a>
   </div>
 
   <div class="stats-row" id="stats-row" style="display:none;">
@@ -363,18 +363,39 @@
   }
 
   async function loadCaseBanner() {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const investigationResult = await supabaseClient
+      .from("mystery_cases")
+      .select("title, badge_emoji")
+      .lte("week_start_date", today)
+      .order("week_start_date", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (investigationResult.data) {
+      document.getElementById("case-label").textContent = "THIS WEEK'S INVESTIGATION";
+      document.getElementById("case-emoji").textContent = investigationResult.data.badge_emoji || "🔎";
+      document.getElementById("case-title").textContent = investigationResult.data.title;
+      document.getElementById("case-solve-link").href = "investigation.html";
+      document.getElementById("case-banner").style.display = "flex";
+      return;
+    }
+
     const { data, error } = await supabaseClient
       .from("cases")
       .select("title, badge_emoji")
-      .eq("active", true)
-      .order("created_at", { ascending: false })
+      .lte("week_start_date", today)
+      .order("week_start_date", { ascending: false })
       .limit(1)
       .single();
 
     if (error || !data) return;
 
+    document.getElementById("case-label").textContent = "THIS WEEK'S CASE";
     document.getElementById("case-emoji").textContent = data.badge_emoji || "🔦";
     document.getElementById("case-title").textContent = data.title;
+    document.getElementById("case-solve-link").href = "case.html";
     document.getElementById("case-banner").style.display = "flex";
   }
 

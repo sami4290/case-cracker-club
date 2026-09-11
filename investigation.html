@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investigation — Case Cracker Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink-navy: #16233D;
+    --ink-navy-deep: #0E1626;
+    --parchment: #F3E9D2;
+    --parchment-dim: #E9DBB8;
+    --brass: #C89B3C;
+    --brass-light: #E0BC6C;
+    --clue-red: #A63D40;
+    --forest-teal: #2F5D50;
+    --font-display: 'Special Elite', monospace;
+    --font-body: 'Quicksand', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--ink-navy-deep);
+    color: var(--parchment);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 90px; }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .logo { font-family: var(--font-display); font-size: 1.05rem; color: var(--parchment); }
+  .nav-links { display: flex; gap: 16px; align-items: center; }
+  .nav-links a { color: var(--parchment-dim); font-size: 0.88rem; text-decoration: none; font-weight: 600; }
+
+  .loading-state { text-align: center; padding: 60px 0; color: var(--parchment-dim); }
+
+  /* BRIEFING */
+  .briefing {
+    background: linear-gradient(160deg, var(--ink-navy) 0%, #1C2C4A 100%);
+    border: 1px solid rgba(224,188,108,0.35);
+    border-radius: 14px;
+    padding: 30px 28px;
+    margin-bottom: 22px;
+  }
+  .briefing-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .badge-emoji { font-size: 2.2rem; }
+  .difficulty-tag {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    color: var(--ink-navy);
+    background: var(--brass-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .briefing h1 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 6px; line-height: 1.3; }
+  .briefing .setting { color: var(--brass-light); font-size: 0.88rem; margin-bottom: 18px; font-style: italic; }
+  .briefing .backstory {
+    font-size: 0.96rem;
+    line-height: 1.75;
+    color: var(--parchment-dim);
+    max-height: 160px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease;
+  }
+  .briefing .backstory.expanded { max-height: 2000px; }
+  .briefing .backstory::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 50px;
+    background: linear-gradient(transparent, #1C2C4A);
+  }
+  .briefing .backstory.expanded::after { display: none; }
+  .backstory p { margin-bottom: 14px; }
+  .expand-btn {
+    background: none;
+    border: none;
+    color: var(--brass-light);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 10px;
+    padding: 0;
+  }
+  .objective-box {
+    margin-top: 18px;
+    background: rgba(200,155,60,0.12);
+    border-left: 3px solid var(--brass);
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .objective-box b { color: var(--brass-light); font-family: var(--font-display); font-size: 0.78rem; display: block; margin-bottom: 6px; }
+
+  .who-picker {
+    background: rgba(243,233,210,0.06);
+    border: 1px solid rgba(243,233,210,0.15);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .who-picker label { font-weight: 700; font-size: 0.9rem; }
+  select#child-select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(243,233,210,0.3);
+    background: var(--ink-navy);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+  }
+
+  /* TABS */
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(243,233,210,0.15);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--parchment-dim);
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  .tab-btn.active { color: var(--brass-light); border-bottom-color: var(--brass); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SUSPECTS */
+  .suspect-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 600px) { .suspect-grid { grid-template-columns: 1fr 1fr; } }
+  .suspect-card {
+    background: rgba(243,233,210,0.05);
+    border: 1px solid rgba(243,233,210,0.15);
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+  }
+  .suspect-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .suspect-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 1.1rem;
+    color: var(--ink-navy); flex-shrink: 0;
+  }
+  .suspect-name { font-weight: 700; font-size: 0.98rem; }
+  .suspect-role { font-size: 0.8rem; color: var(--parchment-dim); }
+  .suspect-details { display: none; margin-top: 14px; font-size: 0.86rem; line-height: 1.6; }
+  .suspect-card.open .suspect-details { display: block; }
+  .suspect-details .field { margin-bottom: 10px; }
+  .suspect-details .field b { color: var(--brass-light); font-family: var(--font-display); font-size: 0.7rem; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .toggle-hint { font-size: 0.78rem; color: var(--brass-light); margin-top: 8px; }
+
+  /* EVIDENCE */
+  .clue-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 600px) { .clue-grid { grid-template-columns: 1fr 1fr; } }
+  .clue-card {
+    background: rgba(243,233,210,0.05);
+    border: 1px solid rgba(243,233,210,0.15);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .clue-card.examined { border-color: var(--forest-teal); background: rgba(47,93,80,0.1); }
+  .clue-type { font-size: 0.72rem; color: var(--brass-light); font-family: var(--font-display); text-transform: uppercase; margin-bottom: 6px; }
+  .clue-title { font-weight: 700; font-size: 0.96rem; margin-bottom: 10px; }
+  .examine-btn {
+    background: var(--brass);
+    color: var(--ink-navy);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .clue-body { display: none; font-size: 0.86rem; line-height: 1.6; margin-top: 6px; }
+  .clue-card.examined .clue-body { display: block; }
+  .clue-card.examined .examine-btn { display: none; }
+  .discovery-text { font-style: italic; color: var(--parchment-dim); margin-bottom: 8px; }
+
+  /* TIMELINE */
+  .timeline-list { list-style: none; }
+  .timeline-item {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(243,233,210,0.1);
+  }
+  .timeline-time { font-family: var(--font-display); color: var(--brass-light); font-size: 0.85rem; width: 90px; flex-shrink: 0; }
+  .timeline-event { font-size: 0.9rem; color: var(--parchment-dim); }
+
+  /* HINTS */
+  .hint-section {
+    background: rgba(243,233,210,0.05);
+    border: 1px dashed rgba(224,188,108,0.4);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 22px 0;
+  }
+  .hint-section h3 { font-family: var(--font-display); font-size: 0.9rem; margin-bottom: 10px; color: var(--brass-light); }
+  .hint-item { font-size: 0.88rem; margin-bottom: 8px; padding-left: 16px; position: relative; }
+  .hint-item::before { content: "•"; position: absolute; left: 0; color: var(--brass); }
+  .hint-btn {
+    background: transparent;
+    border: 1.5px solid var(--brass);
+    color: var(--brass-light);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .hint-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* DEDUCTION */
+  .deduction-section {
+    background: rgba(243,233,210,0.05);
+    border: 1px solid rgba(243,233,210,0.15);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .deduction-section h2 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 6px; }
+  .deduction-section > p { font-size: 0.88rem; color: var(--parchment-dim); margin-bottom: 20px; }
+  .deduction-field { margin-bottom: 16px; }
+  .deduction-field label { display: block; font-family: var(--font-display); font-size: 0.78rem; color: var(--brass-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .deduction-field select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(243,233,210,0.3);
+    background: var(--ink-navy);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+  }
+  .submit-deduction-btn {
+    width: 100%;
+    background: var(--clue-red);
+    color: var(--parchment);
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .submit-deduction-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* RESULTS */
+  .results-card {
+    background: linear-gradient(160deg, var(--ink-navy) 0%, #1C2C4A 100%);
+    border: 1px solid var(--brass);
+    border-radius: 14px;
+    padding: 32px 28px;
+  }
+  .results-card h2 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 4px; }
+  .score-total { font-family: var(--font-display); color: var(--brass-light); font-size: 2rem; margin: 14px 0; }
+  .score-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .score-row {
+    background: rgba(243,233,210,0.06);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+  .score-row .label { font-family: var(--font-display); font-size: 0.7rem; color: var(--brass-light); text-transform: uppercase; }
+  .score-row.correct { border-left: 3px solid var(--forest-teal); }
+  .score-row.incorrect { border-left: 3px solid var(--clue-red); }
+  .explanation-box {
+    background: rgba(47,93,80,0.15);
+    border-left: 3px solid var(--forest-teal);
+    padding: 18px;
+    border-radius: 6px;
+    font-size: 0.92rem;
+    line-height: 1.75;
+    margin: 20px 0;
+  }
+  .results-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .results-btn {
+    background: var(--brass);
+    color: var(--ink-navy);
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .results-btn.secondary { background: transparent; color: var(--parchment); border: 1.5px solid rgba(243,233,210,0.3); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">🕵️ Case Cracker Club</div>
+    <div class="nav-links">
+      <a href="casefiles.html">Case Files</a>
+      <a href="dashboard.html">← Dashboard</a>
+    </div>
+  </nav>
+
+  <div id="page-content">
+    <div class="loading-state">Pulling the case file...</div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://leqmwwaasqrigppyaboc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_bnJq86HNYfwmiVrDKsfs0g_VwQU6lx5";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const AVATAR_COLORS = ["#C89B3C", "#A63D40", "#2F5D50", "#6B7CA6", "#8D5524"];
+
+  let currentUser = null;
+  let mysteryCase = null;
+  let children = [];
+  let isArchive = false;
+  let hintsRevealed = 0;
+
+  function getArchiveIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function init() {
+    const archiveId = getArchiveIdFromUrl();
+    isArchive = !!archiveId;
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session && !isArchive) {
+      window.location.href = "signup.html";
+      return;
+    }
+    currentUser = session ? session.user : null;
+
+    let caseResult, childrenResult;
+
+    if (isArchive) {
+      caseResult = await supabaseClient.from("mystery_cases").select("*").eq("id", archiveId).single();
+      childrenResult = currentUser
+        ? await supabaseClient.from("children").select("*").eq("parent_id", currentUser.id).order("created_at", { ascending: true })
+        : { data: [] };
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      [caseResult, childrenResult] = await Promise.all([
+        supabaseClient.from("mystery_cases").select("*").lte("week_start_date", today).order("week_start_date", { ascending: false }).limit(1).single(),
+        supabaseClient.from("children").select("*").eq("parent_id", currentUser.id).order("created_at", { ascending: true })
+      ]);
+    }
+
+    if (childrenResult.data) children = childrenResult.data;
+
+    if (caseResult.error || !caseResult.data) {
+      document.getElementById("page-content").innerHTML = '<div class="loading-state">No investigation is live right now — check back Monday!</div>';
+      return;
+    }
+
+    mysteryCase = caseResult.data;
+    renderPage();
+  }
+
+  function renderPage() {
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="briefing">
+        <div class="briefing-top">
+          <span class="badge-emoji">${mysteryCase.badge_emoji || "🔎"}</span>
+          <span class="difficulty-tag">${escapeHtml(mysteryCase.difficulty)}</span>
+        </div>
+        <h1>${escapeHtml(mysteryCase.title)}</h1>
+        <div class="setting">${escapeHtml(mysteryCase.setting)}</div>
+        <div class="backstory" id="backstory">
+          ${mysteryCase.backstory.split("\n\n").map(p => `<p>${escapeHtml(p)}</p>`).join("")}
+        </div>
+        <button class="expand-btn" id="expand-btn">Read the full briefing ↓</button>
+        <div class="objective-box">
+          <b>YOUR OBJECTIVE</b>
+          ${escapeHtml(mysteryCase.objective)}
+        </div>
+      </div>
+
+      ${children.length > 0 && !isArchive ? `
+        <div class="who-picker">
+          <label for="child-select">Who is investigating?</label>
+          <select id="child-select">
+            ${children.map(c => `<option value="${c.id}">${c.avatar_emoji} ${escapeHtml(c.codename)}</option>`).join("")}
+          </select>
+        </div>
+      ` : ""}
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="suspects">Suspects</button>
+        <button class="tab-btn" data-tab="evidence">Evidence</button>
+        <button class="tab-btn" data-tab="timeline">Timeline</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-suspects">
+        <div class="suspect-grid">
+          ${mysteryCase.suspects.map((s, i) => `
+            <div class="suspect-card" data-index="${i}">
+              <div class="suspect-head">
+                <div class="suspect-avatar" style="background:${AVATAR_COLORS[i % AVATAR_COLORS.length]}">${escapeHtml(s.name.charAt(0))}</div>
+                <div>
+                  <div class="suspect-name">${escapeHtml(s.name)}</div>
+                  <div class="suspect-role">${escapeHtml(s.occupation)}${s.age ? ", age " + s.age : ""}</div>
+                </div>
+              </div>
+              <div class="toggle-hint">Tap to view statement & background ↓</div>
+              <div class="suspect-details">
+                <div class="field"><b>Relationship</b>${escapeHtml(s.relationship)}</div>
+                <div class="field"><b>Statement</b>${escapeHtml(s.statement)}</div>
+                <div class="field"><b>Alibi</b>${escapeHtml(s.alibi)}</div>
+                <div class="field"><b>Background</b>${escapeHtml(s.background)}</div>
+                <div class="field"><b>Worth noting</b>${escapeHtml(s.suspicious)}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-evidence">
+        <div class="clue-grid">
+          ${mysteryCase.clues.map((c, i) => `
+            <div class="clue-card" data-index="${i}">
+              <div class="clue-type">${escapeHtml(c.evidence_type)}</div>
+              <div class="clue-title">${escapeHtml(c.title)}</div>
+              <button class="examine-btn">Examine Evidence</button>
+              <div class="clue-body">
+                <div class="discovery-text">${escapeHtml(c.discovery_text)}</div>
+                <div>${escapeHtml(c.description)}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-timeline">
+        <ul class="timeline-list">
+          ${mysteryCase.timeline.map(t => `
+            <li class="timeline-item">
+              <div class="timeline-time">${escapeHtml(t.time)}</div>
+              <div class="timeline-event">${escapeHtml(t.event)}</div>
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+
+      <div class="hint-section">
+        <h3>Need a hint?</h3>
+        <div id="hints-list"></div>
+        <button class="hint-btn" id="hint-btn">Reveal a Hint (${mysteryCase.hints.length} available)</button>
+      </div>
+
+      <div class="deduction-section">
+        <h2>Final Deduction</h2>
+        <p>When you are ready, submit your full theory: who did it, why, how, and what they used.</p>
+
+        <div class="deduction-field">
+          <label>Who is the culprit?</label>
+          <select id="select-culprit"><option value="">Choose a suspect...</option>${shuffledOptions(mysteryCase.culprit_options)}</select>
+        </div>
+        <div class="deduction-field">
+          <label>What was the motive?</label>
+          <select id="select-motive"><option value="">Choose a motive...</option>${shuffledOptions(mysteryCase.motive_options)}</select>
+        </div>
+        <div class="deduction-field">
+          <label>What was the method?</label>
+          <select id="select-method"><option value="">Choose a method...</option>${shuffledOptions(mysteryCase.method_options)}</select>
+        </div>
+        <div class="deduction-field">
+          <label>What tool or mechanism was used?</label>
+          <select id="select-weapon"><option value="">Choose an option...</option>${shuffledOptions(mysteryCase.weapon_options)}</select>
+        </div>
+
+        <button class="submit-deduction-btn" id="submit-btn">Submit Final Deduction</button>
+      </div>
+    `;
+
+    document.getElementById("expand-btn").addEventListener("click", () => {
+      const el = document.getElementById("backstory");
+      el.classList.toggle("expanded");
+      document.getElementById("expand-btn").textContent = el.classList.contains("expanded") ? "Show less ↑" : "Read the full briefing ↓";
+    });
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.querySelectorAll(".suspect-card").forEach(card => {
+      card.addEventListener("click", () => card.classList.toggle("open"));
+    });
+
+    document.querySelectorAll(".clue-card .examine-btn").forEach((btn, i) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        btn.closest(".clue-card").classList.add("examined");
+      });
+    });
+
+    document.getElementById("hint-btn").addEventListener("click", revealNextHint);
+    document.getElementById("submit-btn").addEventListener("click", submitDeduction);
+  }
+
+  function shuffledOptions(options) {
+    const shuffled = [...options].sort(() => Math.random() - 0.5);
+    return shuffled.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+  }
+
+  function revealNextHint() {
+    if (hintsRevealed >= mysteryCase.hints.length) return;
+    hintsRevealed++;
+    const list = document.getElementById("hints-list");
+    list.innerHTML = mysteryCase.hints.slice(0, hintsRevealed).map((h, i) => `
+      <div class="hint-item">Hint ${i + 1}: ${escapeHtml(h)}</div>
+    `).join("");
+
+    const btn = document.getElementById("hint-btn");
+    if (hintsRevealed >= mysteryCase.hints.length) {
+      btn.disabled = true;
+      btn.textContent = "No more hints";
+    } else {
+      btn.textContent = `Reveal a Hint (${mysteryCase.hints.length - hintsRevealed} left)`;
+    }
+  }
+
+  async function submitDeduction() {
+    const culprit = document.getElementById("select-culprit").value;
+    const motive = document.getElementById("select-motive").value;
+    const method = document.getElementById("select-method").value;
+    const weapon = document.getElementById("select-weapon").value;
+
+    if (!culprit || !motive || !method || !weapon) {
+      alert("Fill in all four parts of your deduction before submitting.");
+      return;
+    }
+
+    const results = {
+      culprit: culprit === mysteryCase.culprit_correct,
+      motive: motive === mysteryCase.motive_correct,
+      method: method === mysteryCase.method_correct,
+      weapon: weapon === mysteryCase.weapon_correct
+    };
+
+    let score = 0;
+    if (results.culprit) score += 25;
+    if (results.motive) score += 25;
+    if (results.method) score += 25;
+    if (results.weapon) score += 25;
+
+    const usedHints = hintsRevealed > 0;
+    if (!usedHints && score === 100) score += 10;
+
+    let alreadySolved = false;
+    let childCodename = "Detective";
+
+    if (!isArchive && children.length > 0) {
+      const select = document.getElementById("child-select");
+      const childId = select.value;
+      const child = children.find(c => c.id === childId);
+      childCodename = child.codename;
+
+      const { error: insertError } = await supabaseClient.from("solved_mystery_cases").insert({
+        child_id: childId,
+        mystery_case_id: mysteryCase.id,
+        score: score,
+        used_hints: usedHints
+      });
+
+      if (insertError && insertError.code === "23505") {
+        alreadySolved = true;
+      } else if (!insertError) {
+        await supabaseClient.from("children").update({ points: (child.points || 0) + score }).eq("id", childId);
+      }
+    }
+
+    renderResults(results, score, alreadySolved, childCodename);
+  }
+
+  function renderResults(results, score, alreadySolved, childCodename) {
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="results-card">
+        <div class="difficulty-tag" style="margin-bottom:14px; display:inline-block;">CASE CLOSED</div>
+        <h2>${escapeHtml(mysteryCase.title)}</h2>
+        <div class="score-total">${alreadySolved ? "Already Solved" : score + " / 110"}</div>
+
+        <div class="score-breakdown">
+          <div class="score-row ${results.culprit ? 'correct' : 'incorrect'}"><div class="label">Culprit</div>${results.culprit ? "Correct" : "Incorrect"} — it was ${escapeHtml(mysteryCase.culprit_correct)}</div>
+          <div class="score-row ${results.motive ? 'correct' : 'incorrect'}"><div class="label">Motive</div>${results.motive ? "Correct" : "Incorrect"}</div>
+          <div class="score-row ${results.method ? 'correct' : 'incorrect'}"><div class="label">Method</div>${results.method ? "Correct" : "Incorrect"}</div>
+          <div class="score-row ${results.weapon ? 'correct' : 'incorrect'}"><div class="label">Tool Used</div>${results.weapon ? "Correct" : "Incorrect"}</div>
+        </div>
+
+        <div class="explanation-box">${escapeHtml(mysteryCase.explanation)}</div>
+
+        <div class="results-actions">
+          <a href="leaderboard.html" class="results-btn">See the Leaderboard</a>
+          <a href="dashboard.html" class="results-btn secondary">Back to Dashboard</a>
+        </div>
+      </div>
+    `;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
