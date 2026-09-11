@@ -105,7 +105,7 @@
     <div class="logo">🕵️ Case Cracker Club</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="case.html">This Week's Case</a>
+      <a href="investigation.html">This Week's Case</a>
       <a href="leaderboard.html">Leaderboard</a>
     </div>
   </nav>
@@ -113,12 +113,9 @@
   <h1>Case Files</h1>
   <p class="sub">Every mystery the club has ever cracked, all in one place — browse and reopen any of them, any time. Solving from here is just for fun, points only count for this week's live case.</p>
 
-  <div class="section-label" id="investigations-label" style="display:none;">FULL INVESTIGATIONS</div>
-  <div class="investigation-grid" id="investigation-grid"></div>
-
-  <div class="section-label">QUICK CASES</div>
-  <div class="case-grid" id="case-grid">
-    <div class="empty-state">Loading past cases...</div>
+  <div class="section-label">INVESTIGATIONS</div>
+  <div class="investigation-grid" id="investigation-grid">
+    <div class="empty-state">Loading past investigations...</div>
   </div>
 </div>
 
@@ -141,7 +138,6 @@
 
   async function loadInvestigations() {
     const grid = document.getElementById("investigation-grid");
-    const label = document.getElementById("investigations-label");
     const today = new Date().toISOString().slice(0, 10);
 
     const { data, error } = await supabaseClient
@@ -149,44 +145,8 @@
       .select("*")
       .order("week_start_date", { ascending: false });
 
-    if (error || !data || data.length === 0) return;
-
-    const pastCases = [];
-    let currentFound = false;
-    for (const c of data) {
-      if (!currentFound && c.week_start_date && c.week_start_date <= today) {
-        currentFound = true;
-        continue;
-      }
-      pastCases.push(c);
-    }
-
-    if (pastCases.length === 0) return;
-
-    label.style.display = "block";
-    grid.innerHTML = pastCases.map(c => `
-      <a href="investigation.html?id=${c.id}" class="investigation-card">
-        <div class="badge">${c.badge_emoji || "🔎"}</div>
-        <div>
-          <h3>${escapeHtml(c.title)}</h3>
-          <p>${escapeHtml(c.setting)}</p>
-          <div class="meta">${escapeHtml(c.difficulty).toUpperCase()} · ${formatDate(c.week_start_date)}</div>
-        </div>
-      </a>
-    `).join("");
-  }
-
-  async function loadQuickCases() {
-    const grid = document.getElementById("case-grid");
-    const today = new Date().toISOString().slice(0, 10);
-
-    const { data, error } = await supabaseClient
-      .from("cases")
-      .select("*")
-      .order("week_start_date", { ascending: false });
-
     if (error || !data || data.length === 0) {
-      grid.innerHTML = '<div class="empty-state">No quick cases yet.</div>';
+      grid.innerHTML = '<div class="empty-state">No investigations yet — check back soon.</div>';
       return;
     }
 
@@ -201,22 +161,23 @@
     }
 
     if (pastCases.length === 0) {
-      grid.innerHTML = '<div class="empty-state">No past quick cases yet.</div>';
+      grid.innerHTML = '<div class="empty-state">No past investigations yet — check back after next Monday\'s new case.</div>';
       return;
     }
 
     grid.innerHTML = pastCases.map(c => `
-      <a href="case.html?id=${c.id}" class="case-card">
-        <div class="case-badge">${c.badge_emoji || "🔎"}</div>
-        <h3>${escapeHtml(c.title)}</h3>
-        <p>${escapeHtml((c.story_intro || "").slice(0, 100))}${(c.story_intro || "").length > 100 ? "…" : ""}</p>
-        <div class="case-date">${formatDate(c.week_start_date)}</div>
+      <a href="investigation.html?id=${c.id}" class="investigation-card">
+        <div class="badge">${c.badge_emoji || "🔎"}</div>
+        <div>
+          <h3>${escapeHtml(c.title)}</h3>
+          <p>${escapeHtml(c.setting)}</p>
+          <div class="meta">${escapeHtml(c.difficulty).toUpperCase()} · ${formatDate(c.week_start_date)}</div>
+        </div>
       </a>
     `).join("");
   }
 
   loadInvestigations();
-  loadQuickCases();
 </script>
 
 </body>
