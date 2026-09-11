@@ -102,6 +102,39 @@
   .starter-btn img { width: 100%; height: 100%; }
   .starter-btn.selected { border-color: var(--brass); border-width: 3px; }
 
+  .step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .step-progress {
+    font-size: 0.8rem;
+    color: #6B7690;
+    font-weight: 600;
+  }
+
+  .nav-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--parchment);
+    padding: 16px 0;
+    display: flex;
+    gap: 12px;
+  }
+  .nav-btn {
+    padding: 14px 26px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.98rem;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+  .nav-btn-primary { background: var(--brass); color: var(--ink-navy); flex: 1; }
+  .nav-btn-secondary { background: transparent; color: var(--ink-navy); border: 1.5px solid rgba(22,35,61,0.2); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .category {
     background: white;
     border: 1.5px solid rgba(22,35,61,0.12);
@@ -213,10 +246,16 @@
     { key: "details", label: "Extra Detail", options: DETAIL_STYLES, type: "avatar" }
   ];
 
+  const STEPS = [
+    { type: "starter", label: "Quick Start Looks" },
+    ...CATEGORIES.map(cat => ({ type: cat.type, label: cat.label, key: cat.key, options: cat.options }))
+  ];
+
   let currentUser = null;
   let childId = null;
   let child = null;
   let config = Object.assign({}, DEFAULT_AVATAR_CONFIG);
+  let stepIndex = 0;
 
   function getChildIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -269,29 +308,62 @@
         </div>
       </div>
 
-      <div class="category">
-        <h3>Quick Start Looks</h3>
-        <div class="starter-row" id="starter-looks"></div>
-      </div>
+      <div class="category" id="step-panel"></div>
 
-      <div id="categories-container"></div>
-
-      <div class="save-bar">
-        <button class="btn btn-primary" id="save-btn">Save Detective</button>
-        <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
+      <div class="nav-bar">
+        <button class="nav-btn nav-btn-secondary" id="back-btn">Back</button>
+        <button class="nav-btn nav-btn-primary" id="next-btn">Next</button>
       </div>
       <div id="save-message"></div>
+      <div style="margin-top:10px;"><a href="dashboard.html" style="font-size:0.85rem; color:#6B7690;">Cancel and return to dashboard</a></div>
     `;
 
     renderPreview();
-    renderStarterLooks();
-    renderCategories();
+    renderStep();
 
-    document.getElementById("save-btn").addEventListener("click", saveProfile);
+    document.getElementById("back-btn").addEventListener("click", () => {
+      if (stepIndex > 0) {
+        stepIndex--;
+        renderStep();
+      }
+    });
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+      if (stepIndex < STEPS.length - 1) {
+        stepIndex++;
+        renderStep();
+      } else {
+        saveProfile();
+      }
+    });
   }
 
-  function renderStarterLooks() {
-    const row = document.getElementById("starter-looks");
+  function renderStep() {
+    const step = STEPS[stepIndex];
+    const panel = document.getElementById("step-panel");
+
+    panel.innerHTML = `
+      <div class="step-header">
+        <h3>${step.label}</h3>
+        <span class="step-progress">Step ${stepIndex + 1} of ${STEPS.length}</span>
+      </div>
+      <div class="${step.type === 'starter' ? 'starter-row' : 'option-row'}" id="step-options"></div>
+    `;
+
+    if (step.type === "starter") {
+      renderStarterOptions();
+    } else {
+      renderCategoryOptions(step);
+    }
+
+    const backBtn = document.getElementById("back-btn");
+    const nextBtn = document.getElementById("next-btn");
+    backBtn.disabled = stepIndex === 0;
+    nextBtn.textContent = stepIndex === STEPS.length - 1 ? "Save Detective" : "Next";
+  }
+
+  function renderStarterOptions() {
+    const row = document.getElementById("step-options");
     row.innerHTML = STARTER_LOOKS.map((look, i) => {
       const url = buildAvatarUrl(look, 64);
       return `<button type="button" class="starter-btn" data-index="${i}" title="Look ${i + 1}"><img src="${url}" alt="Look ${i + 1}"></button>`;
@@ -301,8 +373,7 @@
       btn.addEventListener("click", () => {
         config = Object.assign({}, STARTER_LOOKS[Number(btn.dataset.index)]);
         renderPreview();
-        renderStarterLooks();
-        renderCategories();
+        renderStarterOptions();
       });
     });
   }
@@ -312,22 +383,8 @@
     document.getElementById("preview-circle").innerHTML = `<img src="${url}" alt="preview">`;
   }
 
-  function renderCategories() {
-    const container = document.getElementById("categories-container");
-    container.innerHTML = CATEGORIES.map(cat => `
-      <div class="category">
-        <h3>${cat.label}</h3>
-        <div class="option-row" id="options-${cat.key}"></div>
-      </div>
-    `).join("");
-
-    CATEGORIES.forEach(cat => {
-      renderCategoryOptions(cat);
-    });
-  }
-
   function renderCategoryOptions(cat) {
-    const row = document.getElementById(`options-${cat.key}`);
+    const row = document.getElementById("step-options");
 
     if (cat.type === "color") {
       row.innerHTML = cat.options.map(opt => {
