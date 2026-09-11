@@ -210,7 +210,10 @@
 <div class="wrap">
   <nav>
     <div class="logo">🕵️ Case Cracker Club</div>
-    <a href="dashboard.html" class="back-link">← Dashboard</a>
+    <div style="display:flex; gap:14px; align-items:center;">
+      <a href="depository.html" class="back-link">Depository</a>
+      <a href="dashboard.html" class="back-link">← Dashboard</a>
+    </div>
   </nav>
 
   <div class="who-picker" id="who-picker" style="display:none;">
@@ -236,25 +239,47 @@
   let children = [];
   let stageIndex = 0;
   let answeredCorrectly = false;
+  let isArchive = false;
+
+  function getArchiveIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  }
 
   async function init() {
+    const archiveId = getArchiveIdFromUrl();
+    isArchive = !!archiveId;
+
     const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
+
+    if (!session && !isArchive) {
       window.location.href = "signup.html";
       return;
     }
-    currentUser = session.user;
+    currentUser = session ? session.user : null;
 
-    const [caseResult, childrenResult] = await Promise.all([
-      supabaseClient.from("cases").select("*").eq("active", true).order("created_at", { ascending: false }).limit(1).single(),
-      supabaseClient.from("children").select("*").eq("parent_id", currentUser.id).order("created_at", { ascending: true })
-    ]);
+    let caseResult, childrenResult;
+
+    if (isArchive) {
+      caseResult = await supabaseClient.from("cases").select("*").eq("id", archiveId).single();
+      childrenResult = currentUser
+        ? await supabaseClient.from("children").select("*").eq("parent_id", currentUser.id).order("created_at", { ascending: true })
+        : { data: [] };
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      [caseResult, childrenResult] = await Promise.all([
+        supabaseClient.from("cases").select("*").lte("week_start_date", today).order("week_start_date", { ascending: false }).limit(1).single(),
+        supabaseClient.from("children").select("*").eq("parent_id", currentUser.id).order("created_at", { ascending: true })
+      ]);
+    }
 
     if (childrenResult.data && childrenResult.data.length > 0) {
       children = childrenResult.data;
       const select = document.getElementById("child-select");
       select.innerHTML = children.map(c => `<option value="${c.id}">${c.avatar_emoji} ${escapeHtml(c.codename)}</option>`).join("");
-      document.getElementById("who-picker").style.display = "block";
+      if (!isArchive) {
+        document.getElementById("who-picker").style.display = "block";
+      }
     }
 
     if (caseResult.error || !caseResult.data) {
@@ -308,7 +333,7 @@
 
     document.getElementById("case-container").innerHTML = `
       <div class="case-card">
-        <div class="case-label">THIS WEEK'S CASE</div>
+        <div class="case-label">${isArchive ? "FROM THE DEPOSITORY" : "THIS WEEK'S CASE"}</div>
         <h1>${escapeHtml(currentCase.title)}</h1>
         ${stageIndex === 0 ? `<p class="intro">${escapeHtml(currentCase.story_intro)}</p>` : ""}
 
@@ -366,6 +391,19 @@
   }
 
   async function finishCase(messageEl) {
+    if (isArchive) {
+      sessionStorage.setItem("caseAchievement", JSON.stringify({
+        badge: currentCase.badge_emoji,
+        title: currentCase.title,
+        resolution: currentCase.resolution_text,
+        points: 0,
+        codename: "Detective",
+        alreadySolved: true
+      }));
+      window.location.href = "achievement.html";
+      return;
+    }
+
     const select = document.getElementById("child-select");
 
     if (children.length === 0) {
