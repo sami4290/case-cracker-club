@@ -501,27 +501,10 @@
 </div>
 
 <div class="wrap meet-section">
-  <div class="section-label">MEET THE CLUB</div>
-  <h2 style="font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 24px;">Junior detectives, ready for their next case</h2>
-  <div class="meet-grid">
-    <div class="meet-card pinned tilt-l">
-      <div class="meet-photo">
-        <img src="https://img.magnific.com/free-vector/detective-wearing-brown-overcoat-white-background_1308-90621.jpg" alt="Illustration of a young girl detective in a trench coat holding a magnifying glass">
-      </div>
-      <div>
-        <h4>Agent Marigold, Lead Investigator</h4>
-        <p>Never leaves the house without a magnifying glass and a hunch. Solved 40+ cases and counting.</p>
-      </div>
-    </div>
-    <div class="meet-card pinned tilt-r">
-      <div class="meet-photo">
-        <img src="https://img.magnific.com/free-vector/detective-wearing-brown-overcoat-white-background_1308-90624.jpg" alt="Illustration of a young boy detective in a trench coat holding a magnifying glass">
-      </div>
-      <div>
-        <h4>Detective Finch, Clue Specialist</h4>
-        <p>Spots the detail everyone else misses. Currently top of the leaderboard three weeks running.</p>
-      </div>
-    </div>
+  <div class="section-label">TOP DETECTIVES</div>
+  <h2 style="font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 24px;">Right now, these detectives are leading the pack</h2>
+  <div class="meet-grid" id="top-detectives-grid">
+    <div class="meet-card pinned tilt-l"><div><p>Loading...</p></div></div>
   </div>
 </div>
 
@@ -679,6 +662,37 @@
           <div class="codename">${escapeHomeHtml(child.codename)}</div>
         </div>
         <div class="points">${child.points} pts</div>
+      </div>
+    `).join("");
+  })();
+
+  (async () => {
+    const grid = document.getElementById("top-detectives-grid");
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("codename, avatar_emoji, avatar_config, points")
+      .order("points", { ascending: false })
+      .limit(2);
+
+    if (error || !data || data.length === 0 || data[0].points === 0) {
+      grid.innerHTML = `
+        <div class="meet-card pinned tilt-l">
+          <div>
+            <h4>The leaderboard is wide open</h4>
+            <p>No detective has solved a case yet — sign up and be the first name on the board.</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = data.map((child, i) => `
+      <div class="meet-card pinned ${i === 0 ? 'tilt-l' : 'tilt-r'}">
+        <div class="meet-photo">${renderChildAvatar(child, 64)}</div>
+        <div>
+          <h4>${escapeHomeHtml(child.codename)}, Rank #${i + 1}</h4>
+          <p>${child.points} points on the board right now.</p>
+        </div>
       </div>
     `).join("");
   })();
