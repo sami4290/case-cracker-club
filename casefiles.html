@@ -50,33 +50,38 @@
   }
   .section-label:first-of-type { margin-top: 0; }
 
-  .investigation-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .investigation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+  @media (min-width: 640px) {
+    .investigation-grid { grid-template-columns: repeat(3, 1fr); }
+  }
 
   .investigation-card {
     background: var(--ink-navy);
     color: var(--parchment);
     border: 1.5px solid var(--brass);
     border-radius: 12px;
-    padding: 24px;
     text-decoration: none;
     display: flex;
-    gap: 18px;
-    align-items: flex-start;
+    flex-direction: column;
+    overflow: hidden;
   }
   .investigation-card .thumb {
-    width: 84px;
-    height: 84px;
-    border-radius: 8px;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 2px solid var(--brass-light);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-bottom: 2px solid var(--brass-light);
     background: rgba(243,233,210,0.08);
+    overflow: hidden;
   }
   .investigation-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .investigation-card .badge { font-size: 2rem; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-  .investigation-card h3 { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; }
-  .investigation-card p { font-size: 0.86rem; color: var(--parchment-dim); margin-bottom: 8px; }
-  .investigation-card .meta { font-size: 0.78rem; color: var(--brass-light); font-weight: 700; }
+  .investigation-card .badge { font-size: 2.4rem; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .investigation-card .content { padding: 14px 16px 18px; flex: 1; display: flex; flex-direction: column; }
+  .investigation-card h3 { font-family: var(--font-display); font-size: 0.95rem; margin-bottom: 6px; line-height: 1.3; }
+  .investigation-card p { font-size: 0.8rem; color: var(--parchment-dim); margin-bottom: 8px; flex: 1; }
+  .investigation-card .meta { font-size: 0.72rem; color: var(--brass-light); font-weight: 700; }
 
   .case-grid {
     display: grid;
@@ -181,7 +186,7 @@
         <div class="thumb">
           ${getCaseImage(c.title) ? `<img src="${getCaseImage(c.title)}" alt="${escapeHtml(c.title)}">` : `<div class="badge">${c.badge_emoji || "🔎"}</div>`}
         </div>
-        <div>
+        <div class="content">
           <h3>${escapeHtml(c.title)}</h3>
           <p>${escapeHtml(c.setting)}</p>
           <div class="meta">${escapeHtml(c.difficulty).toUpperCase()} · ${formatDate(c.week_start_date)}</div>
