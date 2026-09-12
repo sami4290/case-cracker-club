@@ -500,14 +500,6 @@
   </div>
 </div>
 
-<div class="wrap meet-section">
-  <div class="section-label">TOP DETECTIVES</div>
-  <h2 style="font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 24px;">Right now, these detectives are leading the pack</h2>
-  <div class="meet-grid" id="top-detectives-grid">
-    <div class="meet-card pinned tilt-l"><div><p>Loading...</p></div></div>
-  </div>
-</div>
-
 <div class="wrap section" id="case">
   <div class="section-label">THIS WEEK'S CASE</div>
   <h2>The Case of the Vanishing Lighthouse Keeper</h2>
@@ -662,37 +654,6 @@
           <div class="codename">${escapeHomeHtml(child.codename)}</div>
         </div>
         <div class="points">${child.points} pts</div>
-      </div>
-    `).join("");
-  })();
-
-  (async () => {
-    const grid = document.getElementById("top-detectives-grid");
-    const { data, error } = await supabaseClient
-      .from("children")
-      .select("codename, avatar_emoji, avatar_config, points")
-      .order("points", { ascending: false })
-      .limit(2);
-
-    if (error || !data || data.length === 0 || data[0].points === 0) {
-      grid.innerHTML = `
-        <div class="meet-card pinned tilt-l">
-          <div>
-            <h4>The leaderboard is wide open</h4>
-            <p>No detective has solved a case yet — sign up and be the first name on the board.</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    grid.innerHTML = data.map((child, i) => `
-      <div class="meet-card pinned ${i === 0 ? 'tilt-l' : 'tilt-r'}">
-        <div class="meet-photo">${renderChildAvatar(child, 64)}</div>
-        <div>
-          <h4>${escapeHomeHtml(child.codename)}, Rank #${i + 1}</h4>
-          <p>${child.points} points on the board right now.</p>
-        </div>
       </div>
     `).join("");
   })();
