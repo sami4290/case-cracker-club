@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="case-images.js?v=4"></script>
+<script src="case-images.js?v=5"></script>
 <style>
   :root {
     --ink-navy: #16233D;
@@ -76,7 +76,7 @@
     background: rgba(243,233,210,0.08);
     overflow: hidden;
   }
-  .investigation-card .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: center 100%; display: block; }
+  .investigation-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .investigation-card .badge { font-size: 2.4rem; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
   .investigation-card .content { padding: 14px 16px 18px; flex: 1; display: flex; flex-direction: column; }
   .investigation-card h3 { font-family: var(--font-display); font-size: 0.95rem; margin-bottom: 6px; line-height: 1.3; }
@@ -184,7 +184,7 @@
     grid.innerHTML = pastCases.map(c => `
       <a href="investigation.html?id=${c.id}" class="investigation-card">
         <div class="thumb">
-          ${getCaseImage(c.title) ? `<img src="${getCaseImage(c.title)}" alt="${escapeHtml(c.title)}">` : `<div class="badge">${c.badge_emoji || "🔎"}</div>`}
+          ${getCaseImage(c.title) ? `<img src="${getCaseImage(c.title)}" alt="${escapeHtml(c.title)}" style="object-position:${getCaseImagePosition(c.title)};">` : `<div class="badge">${c.badge_emoji || "🔎"}</div>`}
         </div>
         <div class="content">
           <h3>${escapeHtml(c.title)}</h3>

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="case-images.js?v=4"></script>
+<script src="case-images.js?v=5"></script>
 <style>
   :root {
     --ink-navy: #16233D;
@@ -57,7 +57,7 @@
     margin-bottom: 22px;
     border: 1px solid rgba(224,188,108,0.35);
   }
-  .briefing-image img { width: 100%; height: 100%; object-fit: cover; object-position: center 100%; display: block; }
+  .briefing-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .briefing-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
   .badge-emoji { font-size: 2.2rem; }
   .difficulty-tag {
@@ -400,7 +400,7 @@
     const content = document.getElementById("page-content");
     content.innerHTML = `
       <div class="briefing">
-        ${getCaseImage(mysteryCase.title) ? `<div class="briefing-image"><img src="${getCaseImage(mysteryCase.title)}" alt="${escapeHtml(mysteryCase.title)}"></div>` : ""}
+        ${getCaseImage(mysteryCase.title) ? `<div class="briefing-image"><img src="${getCaseImage(mysteryCase.title)}" alt="${escapeHtml(mysteryCase.title)}" style="object-position:${getCaseImagePosition(mysteryCase.title)};"></div>` : ""}
         <div class="briefing-top">
           ${getCaseImage(mysteryCase.title) ? "" : `<span class="badge-emoji">${mysteryCase.badge_emoji || "🔎"}</span>`}
           <span class="difficulty-tag">${escapeHtml(mysteryCase.difficulty)}</span>
