@@ -347,6 +347,7 @@
   let children = [];
   let isArchive = false;
   let hintsRevealed = 0;
+  let solvedByChild = {};
 
   function getArchiveIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -393,6 +394,18 @@
     }
 
     mysteryCase = caseResult.data;
+
+    if (!isArchive && children.length > 0) {
+      const { data: solvedRows } = await supabaseClient
+        .from("solved_mystery_cases")
+        .select("child_id, score")
+        .eq("mystery_case_id", mysteryCase.id)
+        .in("child_id", children.map(c => c.id));
+      if (solvedRows) {
+        solvedRows.forEach(row => { solvedByChild[row.child_id] = row.score; });
+      }
+    }
+
     renderPage();
   }
 
@@ -489,30 +502,10 @@
         <button class="hint-btn" id="hint-btn">Reveal a Hint (${mysteryCase.hints.length} available)</button>
       </div>
 
-      <div class="deduction-section">
-        <h2>Final Deduction</h2>
-        <p>When you are ready, submit your full theory: who did it, why, how, and what they used.</p>
-
-        <div class="deduction-field">
-          <label>Who is the culprit?</label>
-          <select id="select-culprit"><option value="">Choose a suspect...</option>${shuffledOptions(mysteryCase.culprit_options)}</select>
-        </div>
-        <div class="deduction-field">
-          <label>What was the motive?</label>
-          <select id="select-motive"><option value="">Choose a motive...</option>${shuffledOptions(mysteryCase.motive_options)}</select>
-        </div>
-        <div class="deduction-field">
-          <label>What was the method?</label>
-          <select id="select-method"><option value="">Choose a method...</option>${shuffledOptions(mysteryCase.method_options)}</select>
-        </div>
-        <div class="deduction-field">
-          <label>What tool or mechanism was used?</label>
-          <select id="select-weapon"><option value="">Choose an option...</option>${shuffledOptions(mysteryCase.weapon_options)}</select>
-        </div>
-
-        <button class="submit-deduction-btn" id="submit-btn">Submit Final Deduction</button>
-      </div>
+      <div class="deduction-section" id="deduction-section"></div>
     `;
+
+    renderDeductionArea();
 
     document.getElementById("expand-btn").addEventListener("click", () => {
       const el = document.getElementById("backstory");
@@ -541,6 +534,60 @@
     });
 
     document.getElementById("hint-btn").addEventListener("click", revealNextHint);
+
+    const childSelect = document.getElementById("child-select");
+    if (childSelect) {
+      childSelect.addEventListener("change", renderDeductionArea);
+    }
+  }
+
+  function currentSelectedChildId() {
+    const select = document.getElementById("child-select");
+    if (select) return select.value;
+    if (children.length > 0) return children[0].id;
+    return null;
+  }
+
+  function renderDeductionArea() {
+    const section = document.getElementById("deduction-section");
+    const childId = currentSelectedChildId();
+    const alreadyScore = childId ? solvedByChild[childId] : undefined;
+
+    if (!isArchive && childId && alreadyScore !== undefined) {
+      const child = children.find(c => c.id === childId);
+      section.innerHTML = `
+        <h2>Final Deduction</h2>
+        <div class="score-row correct" style="margin-top:10px;">
+          ${escapeHtml(child ? child.codename : "This detective")} already investigated this case and scored <b>${alreadyScore} / 110</b>. Each detective gets one attempt per case — come back next Monday for a new one, or revisit past cases in the Case Files for fun (no points).
+        </div>
+      `;
+      return;
+    }
+
+    section.innerHTML = `
+      <h2>Final Deduction</h2>
+      <p>When you are ready, submit your full theory: who did it, why, how, and what they used. ${isArchive ? "" : "You only get one attempt, so make it count."}</p>
+
+      <div class="deduction-field">
+        <label>Who is the culprit?</label>
+        <select id="select-culprit"><option value="">Choose a suspect...</option>${shuffledOptions(mysteryCase.culprit_options)}</select>
+      </div>
+      <div class="deduction-field">
+        <label>What was the motive?</label>
+        <select id="select-motive"><option value="">Choose a motive...</option>${shuffledOptions(mysteryCase.motive_options)}</select>
+      </div>
+      <div class="deduction-field">
+        <label>What was the method?</label>
+        <select id="select-method"><option value="">Choose a method...</option>${shuffledOptions(mysteryCase.method_options)}</select>
+      </div>
+      <div class="deduction-field">
+        <label>What tool or mechanism was used?</label>
+        <select id="select-weapon"><option value="">Choose an option...</option>${shuffledOptions(mysteryCase.weapon_options)}</select>
+      </div>
+
+      <button class="submit-deduction-btn" id="submit-btn">Submit Final Deduction</button>
+    `;
+
     document.getElementById("submit-btn").addEventListener("click", submitDeduction);
   }
 
@@ -567,6 +614,13 @@
   }
 
   async function submitDeduction() {
+    const childId = currentSelectedChildId();
+
+    if (!isArchive && childId && solvedByChild[childId] !== undefined) {
+      renderDeductionArea();
+      return;
+    }
+
     const culprit = document.getElementById("select-culprit").value;
     const motive = document.getElementById("select-motive").value;
     const method = document.getElementById("select-method").value;
@@ -596,9 +650,7 @@
     let alreadySolved = false;
     let childCodename = "Detective";
 
-    if (!isArchive && children.length > 0) {
-      const select = document.getElementById("child-select");
-      const childId = select.value;
+    if (!isArchive && children.length > 0 && childId) {
       const child = children.find(c => c.id === childId);
       childCodename = child.codename;
 
@@ -613,6 +665,7 @@
         alreadySolved = true;
       } else if (!insertError) {
         await supabaseClient.from("children").update({ points: (child.points || 0) + score }).eq("id", childId);
+        solvedByChild[childId] = score;
       }
     }
 
