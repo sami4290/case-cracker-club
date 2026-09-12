@@ -1,6 +1,6 @@
 // Maps each investigation case title to a representative image.
 const CASE_IMAGES = {
-  "The Vanishing Diamond": "case-diamond.jpg",
+  "The Vanishing Diamond": "case-diamond2.jpg",
   "The Silenced Solo": "case-violin2.jpg",
   "The Silenced Bell": "case-bell.jpg",
   "The Forged Signature": "case-art.jpg",
