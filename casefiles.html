@@ -166,15 +166,8 @@
       return;
     }
 
-    const pastCases = [];
-    let currentFound = false;
-    for (const c of data) {
-      if (!currentFound && c.week_start_date && c.week_start_date <= today) {
-        currentFound = true;
-        continue;
-      }
-      pastCases.push(c);
-    }
+    const eligible = data.filter(c => c.week_start_date && c.week_start_date <= today);
+    const pastCases = eligible.slice(1);
 
     if (pastCases.length === 0) {
       grid.innerHTML = '<div class="empty-state">No past investigations yet — check back after next Monday\'s new case.</div>';
