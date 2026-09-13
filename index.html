@@ -636,7 +636,7 @@
   (async () => {
     const listEl = document.getElementById("home-leaderboard-list");
     const { data, error } = await supabaseClient
-      .from("children")
+      .from("public_leaderboard")
       .select("codename, avatar_emoji, avatar_config, points")
       .order("points", { ascending: false })
       .limit(3);

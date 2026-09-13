@@ -382,6 +382,7 @@
     const { data, error } = await supabaseClient
       .from("children")
       .select("*")
+      .eq("parent_id", currentUser.id)
       .order("created_at", { ascending: true });
 
     if (error) {
