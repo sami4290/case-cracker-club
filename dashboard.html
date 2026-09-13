@@ -296,14 +296,11 @@
     </div>
 
     <form class="add-child" id="add-child-form" style="flex-direction: column; align-items: stretch;">
-      <div>
-        <label style="font-weight:700; font-size:0.9rem; display:block; margin-bottom:8px;">Choose an avatar</label>
-        <div class="avatar-grid" id="avatar-grid"></div>
-      </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <input type="text" id="codename-input" placeholder="Detective codename (e.g. Agent Marigold)" required>
         <button type="submit" class="add-btn">Add Profile</button>
       </div>
+      <p style="font-size:0.85rem; color:#6B7690; margin-top:4px;">You'll design their detective avatar right after creating the profile.</p>
     </form>
     <div id="limit-message" style="display:none; margin-top:14px; padding:12px; background: rgba(200,155,60,0.12); border-radius:8px; color: var(--brass); font-weight:600; font-size:0.9rem;">
       You've reached the limit of 3 detective profiles per account.
@@ -318,26 +315,8 @@
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = null;
-  let selectedAvatar = "🕵️";
   let children = [];
   let solvedCounts = {};
-
-  const AVATAR_OPTIONS = ["🕵️", "🔍", "🧩", "🦉", "🦊", "🐺", "🦁", "🐧", "🦅", "🐬", "🐙", "🦝"];
-
-  function renderAvatarGrid() {
-    const grid = document.getElementById("avatar-grid");
-    grid.innerHTML = AVATAR_OPTIONS.map(emoji => `
-      <button type="button" class="avatar-option ${emoji === selectedAvatar ? 'selected' : ''}" data-emoji="${emoji}">${emoji}</button>
-    `).join("");
-
-    grid.querySelectorAll(".avatar-option").forEach(btn => {
-      btn.addEventListener("click", () => {
-        selectedAvatar = btn.dataset.emoji;
-        grid.querySelectorAll(".avatar-option").forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-      });
-    });
-  }
 
   function setGreeting() {
     const hour = new Date().getHours();
@@ -357,7 +336,6 @@
     currentUser = session.user;
     document.getElementById("parent-email").textContent = "Signed in as " + currentUser.email;
     setGreeting();
-    renderAvatarGrid();
     loadCaseBanner();
     loadChildren();
   }
@@ -427,17 +405,16 @@
 
   async function loadSolvedCounts() {
     const ids = children.map(c => c.id);
-    const { data, error } = await supabaseClient
-      .from("solved_cases")
-      .select("child_id")
-      .in("child_id", ids);
+    const [oldResult, newResult] = await Promise.all([
+      supabaseClient.from("solved_cases").select("child_id").in("child_id", ids),
+      supabaseClient.from("solved_mystery_cases").select("child_id").in("child_id", ids)
+    ]);
 
     solvedCounts = {};
-    if (!error && data) {
-      data.forEach(row => {
-        solvedCounts[row.child_id] = (solvedCounts[row.child_id] || 0) + 1;
-      });
-    }
+    const allRows = [...(oldResult.data || []), ...(newResult.data || [])];
+    allRows.forEach(row => {
+      solvedCounts[row.child_id] = (solvedCounts[row.child_id] || 0) + 1;
+    });
   }
 
   function renderStats() {
@@ -483,28 +460,21 @@
   document.getElementById("add-child-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const codename = document.getElementById("codename-input").value.trim();
-    const avatar = selectedAvatar;
     const messageEl = document.getElementById("dash-message");
 
     if (!codename) return;
 
-    const { error } = await supabaseClient.from("children").insert({
+    const { data, error } = await supabaseClient.from("children").insert({
       parent_id: currentUser.id,
       codename: codename,
-      avatar_emoji: avatar
-    });
+      avatar_emoji: "🕵️"
+    }).select().single();
 
     if (error) {
       messageEl.className = "error";
       messageEl.textContent = error.message;
     } else {
-      messageEl.className = "success";
-      messageEl.textContent = "Profile added!";
-      document.getElementById("codename-input").value = "";
-      selectedAvatar = "🕵️";
-      renderAvatarGrid();
-      loadChildren();
-      setTimeout(() => { messageEl.style.display = "none"; }, 2000);
+      window.location.href = "avatar-creator.html?child=" + data.id;
     }
   });
 
