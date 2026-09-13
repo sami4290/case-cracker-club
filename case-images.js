@@ -9,7 +9,11 @@ const CASE_IMAGES = {
   "The Archive Whisper": { url: "case-library.jpg", position: "center 75%" },
   "The Melted Masterpiece": { url: "case-ice.jpg", position: "center 75%" },
   "The Conjurers Loss": { url: "case-watch.jpg", position: "center 75%" },
-  "The Sabotaged Dish": { url: "case-cooking.jpg", position: "center 75%" }
+  "The Sabotaged Dish": { url: "case-cooking.jpg", position: "center 75%" },
+  "The Missing Trophy": { url: "case-trophy.jpg", position: "center 75%" },
+  "The Switched Paintings": { url: "case-paintings.jpg", position: "center 75%" },
+  "The Vanishing Birthday Cake": { url: "case-cake.jpg", position: "center 75%" },
+  "The Secret Message": { url: "case-message.jpg", position: "center 75%" }
 };
 
 function getCaseImage(title) {
