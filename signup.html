@@ -133,7 +133,7 @@
 <body>
 
 <div class="card">
-  <div class="badge">CASE CRACKER CLUB</div>
+  <div class="badge">THE CLUE ROOM</div>
   <h1 id="heading">Create Your Parent Account</h1>
 
   <div class="tabs">
@@ -214,6 +214,9 @@
     if (result.error) {
       messageEl.className = "error";
       messageEl.textContent = result.error.message;
+    } else if (mode === "signup" && !result.data.session) {
+      messageEl.className = "success";
+      messageEl.textContent = "Account created! Check your email for a confirmation link before logging in.";
     } else {
       messageEl.className = "success";
       if (mode === "signup") {
