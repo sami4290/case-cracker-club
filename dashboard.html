@@ -190,6 +190,21 @@
     flex-shrink: 0;
   }
 
+  .child-card .delete-btn {
+    background: transparent;
+    border: 1.5px solid rgba(166,61,64,0.35);
+    color: var(--clue-red);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  .child-card .delete-btn:hover { background: rgba(166,61,64,0.08); }
+
   .empty-state { color: #6B7690; font-size: 0.95rem; padding: 12px 0; }
 
   .avatar-grid {
@@ -442,8 +457,31 @@
           </div>
         </div>
         <a href="avatar-creator.html?child=${child.id}" class="edit-btn">Edit</a>
+        <button type="button" class="delete-btn" data-id="${child.id}" data-name="${escapeHtml(child.codename)}">Delete</button>
       </div>
     `).join("") + `</div>`;
+
+    listEl.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => handleDeleteChild(btn.dataset.id, btn.dataset.name));
+    });
+  }
+
+  async function handleDeleteChild(childId, codename) {
+    const confirmed = window.confirm(
+      `Delete ${codename}'s profile? This permanently removes their avatar, points, and case history. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    await supabaseClient.from("solved_mystery_cases").delete().eq("child_id", childId);
+    await supabaseClient.from("solved_cases").delete().eq("child_id", childId);
+    const { error } = await supabaseClient.from("children").delete().eq("id", childId);
+
+    if (error) {
+      alert("Could not delete this profile: " + error.message);
+      return;
+    }
+
+    loadChildren();
   }
 
   function toggleAddForm(show) {
