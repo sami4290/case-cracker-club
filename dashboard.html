@@ -409,6 +409,8 @@
 
     if (children.length === 0) {
       listEl.innerHTML = '<div class="empty-state">No detective profiles yet — add your first one below.</div>';
+      solvedCounts = {};
+      renderStats();
       toggleAddForm(true);
       return;
     }
